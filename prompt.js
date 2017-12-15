@@ -1,5 +1,10 @@
 const _forEach = require("lodash/forEach");
-const { emitKeypressEvents, cursorTo, clearLine } = require("readline");
+const {
+  emitKeypressEvents,
+  cursorTo,
+  clearLine,
+  moveCursor
+} = require("readline");
 const stringWidth = require("string-width");
 
 const { setPath, setPatch } = require("./immutably.js");
@@ -129,6 +134,11 @@ function Prompt() {
       debug({ state });
       this.applyStateChanges(state);
       this.render();
+      if (state.resolve) {
+        cursorTo(this.output, 0);
+        moveCursor(this.output, 0, 1);
+        this.resolve(state.command.text.trim());
+      }
     },
 
     applyStateChanges: function(state) {
@@ -143,6 +153,7 @@ function Prompt() {
     start() {
       emitKeypressEvents(this.input);
       const state = setPatch(this.state, {
+        resolve: false,
         input: {
           rawMode: true,
           pause: false,
@@ -151,24 +162,20 @@ function Prompt() {
               this.onkeypress(s, k);
             }
           }
+        },
+        command: {
+          text: "",
+          cursor: {
+            col: 0
+          }
         }
       });
-      debug({ state });
       this.applyStateChanges(state);
-
-      // this.applyStateChanges({
-      //   ...this.state,
-      //   input: {
-      //     ...this.state.input,
-      //     rawMode: true,
-      //     pause: false,
-      //     listener: {
-      //       ...this.state.input.listener,
-      //       keypress: (s, k) => this.onkeypress(s, k)
-      //     }
-      //   }
-      // });
       this.render();
+      return new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
+      });
     },
 
     render() {

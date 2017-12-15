@@ -7,5 +7,9 @@ const prompt = Prompt();
 
 Object.assign(prompt, { keyPressPlain, keyPressCtrl });
 
-// process.stdin.on("keypress", () => console.log("keypress"));
-prompt.start();
+prompt
+  .start()
+  .then(command => console.log(`received1: "${command}"`))
+  .then(() => prompt.start())
+  .then(command => console.log(`received2: "${command}"`))
+  .catch(console.error);

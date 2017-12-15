@@ -1,0 +1,35 @@
+{
+  "name": "makitso-command",
+  "version": "1.0.0",
+  "description": "a commandline prompt",
+  "main": "index.js",
+  "author": "jason@lecstor.com",
+  "license": "MIT",
+  "dependencies": {
+    "prettyjson": "^1.2.1",
+    "string-width": "^2.1.1",
+    "term-size": "^1.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.9.0",
+    "eslint-config-prettier": "^2.6.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.0",
+    "eslint-plugin-prettier": "^2.3.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "jest": "^21.2.1",
+    "prettier": "^1.7.4",
+    "prettier-eslint": "^8.3.1"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "bin": {
+    "makitso": "./bin/index.js"
+  },
+  "engines": {
+    "node": ">=8.9"
+  }
+}

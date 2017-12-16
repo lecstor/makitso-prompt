@@ -16,7 +16,8 @@ module.exports = {
           keypress: null
         }
       },
-      command: { text: "\n", cursor: { col: 0 } },
+      command: { text: "\n" },
+      cursor: { col: 0, row: 0 },
       prompt: { text: "", width: 0 }
     });
   }

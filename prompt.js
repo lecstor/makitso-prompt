@@ -3,11 +3,13 @@ const {
   emitKeypressEvents,
   cursorTo,
   clearLine,
-  moveCursor
+  moveCursor,
+  clearScreenDown
 } = require("readline");
 const stringWidth = require("string-width");
 
 const { setPath, setPatch } = require("./immutably.js");
+const { getDisplayPos } = require("./readline-funcs");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -27,9 +29,9 @@ function Prompt({ prompt = "yay> " } = {}) {
         width: 0
       },
       command: {
-        text: "",
-        cursor: { col: 0, row: 0 }
+        text: ""
       },
+      cursor: { col: 0, row: 0, fromEnd: 0 },
       input: {
         pause: true,
         rawMode: false,
@@ -54,7 +56,25 @@ function Prompt({ prompt = "yay> " } = {}) {
     },
 
     onKeyPress: function(str, key) {
-      const state = this.processKeyPress(this.state, { str, key });
+      let state = this.processKeyPress(this.state, { str, key });
+      if (this.cursorMoved(this.state, state)) {
+        const displayPos = getDisplayPos(
+          state.prompt.text + state.command.text,
+          this.output.columns || Infinity
+        );
+        if (state.cursor.fromEnd) {
+          if (state.cursor.fromEnd < displayPos.cols) {
+            displayPos.cols -= state.cursor.fromEnd;
+          } else {
+            const fromEndPrev = state.cursor.fromEnd - displayPos.cols;
+            displayPos.rows -= 1;
+            displayPos.cols = this.output.columns - fromEndPrev;
+          }
+        }
+        state = setPatch(state, {
+          cursor: { col: displayPos.cols, row: displayPos.rows }
+        });
+      }
 
       this.applyState(state);
 
@@ -74,51 +94,53 @@ function Prompt({ prompt = "yay> " } = {}) {
       }
     },
 
-    start({ prompt = this.defaultPrompt } = {}) {
-      emitKeypressEvents(this.input);
-      const state = setPatch(this.state, {
-        returnCommand: false,
-        input: {
-          rawMode: true,
-          pause: false,
-          listener: {
-            keypress: (s, k) => {
-              this.onKeyPress(s, k);
-            }
-          }
-        },
-        prompt: {
-          text: prompt,
-          width: stringWidth(prompt)
-        },
-        command: {
-          text: "",
-          cursor: {
-            col: 0
-          }
-        }
-      });
-
-      this.applyState(state);
-
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
-      });
-    },
-
-    render({ state, prevState, output }) {
-      debug({ renderState: state });
+    commandlineChanged(prevState, state) {
       const renderedPrompt = `${prevState.prompt.text}${
         prevState.command.text
       }`;
       const newPrompt = `${state.prompt.text}${state.command.text}`;
-      if (renderedPrompt !== newPrompt) {
-        clearLine(output);
+      return renderedPrompt !== newPrompt;
+    },
+
+    cursorMoved(prevState, state) {
+      return (
+        prevState.cursor !== state.cursor ||
+        this.commandlineChanged(prevState, state)
+      );
+    },
+
+    render({ state, prevState, output }) {
+      debug({ renderState: state });
+      if (this.commandlineChanged(prevState, state)) {
+        const newPrompt = `${state.prompt.text}${state.command.text}`;
+
+        // need to move cursor up to prompt row if the commandline has wrapped
+        if (state.cursor.row > 0) {
+          // if the last char on the line is in the last column in the terminal
+          // then we need to make room for the next line
+          if (state.cursor.col === 0) {
+            output.write("\n");
+          }
+          moveCursor(output, 0, -state.cursor.row);
+        }
+        clearScreenDown(output);
         cursorTo(output, 0);
         output.write(newPrompt);
+
+        if (state.cursor.col === 0) {
+          output.write(" "); // Force terminal to allocate a new line
+        }
       }
-      cursorTo(output, state.prompt.width + state.command.cursor.col);
+      if (state.footer) {
+        output.write("\n" + state.footer);
+        const displayPos = getDisplayPos(
+          state.footer,
+          this.output.columns || Infinity
+        );
+        moveCursor(output, 0, -(displayPos.rows + 1));
+      }
+
+      cursorTo(output, state.cursor.col);
     },
 
     updateInput({ prevState, state, input, output }) {
@@ -150,6 +172,41 @@ function Prompt({ prompt = "yay> " } = {}) {
           }
         }
       }
+    },
+
+    start({ prompt = this.defaultPrompt } = {}) {
+      emitKeypressEvents(this.input);
+      const promptWidth = stringWidth(prompt);
+      const state = setPatch(this.state, {
+        returnCommand: false,
+        input: {
+          rawMode: true,
+          pause: false,
+          listener: {
+            keypress: (s, k) => {
+              this.onKeyPress(s, k);
+            }
+          }
+        },
+        prompt: {
+          text: prompt,
+          width: promptWidth
+        },
+        command: {
+          text: ""
+        },
+        cursor: {
+          col: promptWidth,
+          row: 0
+        }
+      });
+
+      this.applyState(state);
+
+      return new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
+      });
     }
   };
 }

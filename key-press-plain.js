@@ -27,16 +27,51 @@ const keyPressPlain = {
   escape(state) {
     return state;
   },
+  tab(state) {
+    return state;
+  },
+  backspace(state) {
+    return setPatch(state, {
+      command: {
+        text: state.command.text.slice(0, -1)
+      }
+    });
+  },
+  delete(state) {
+    const fromEnd = state.cursor.fromEnd;
+    if (!fromEnd) {
+      return state;
+    }
+    const command = state.command.text;
+    return setPatch(state, {
+      command: {
+        text: command.slice(0, -fromEnd + 1) + command.slice(-fromEnd + 2)
+      },
+      cursor: {
+        fromEnd: state.cursor.fromEnd - 1
+      }
+    });
+  },
   left(state) {
-    const pos = state.command.cursor.col > 0 ? state.command.cursor.col - 1 : 0;
-    return setPath(state, "command.cursor.col", pos);
+    const pos = state.cursor.col > 0 ? state.cursor.col - 1 : 0;
+    return setPatch(state, {
+      cursor: {
+        col: pos,
+        fromEnd: state.cursor.fromEnd + 1
+      }
+    });
   },
   right(state) {
-    const pos =
-      state.command.cursor.col < state.command.text.length
-        ? state.command.cursor.col + 1
-        : state.command.text.length;
-    return setPath(state, "command.cursor.col", pos);
+    let col;
+    let fromEnd;
+    if (state.cursor.col < state.prompt.width + state.command.text.length) {
+      col = state.cursor.col + 1;
+      fromEnd = state.cursor.fromEnd - 1;
+    } else {
+      col = state.command.text.length;
+      fromEnd = 0;
+    }
+    return setPatch(state, { cursor: { col, fromEnd } });
   },
   default(state, press) {
     if (press.str instanceof Buffer) {
@@ -45,10 +80,10 @@ const keyPressPlain = {
     if (press.str) {
       state = setPatch(state, {
         command: {
-          text: `${state.command.text}${press.str}`,
-          cursor: {
-            col: state.command.cursor.col + 1
-          }
+          text: `${state.command.text}${press.str}`
+        },
+        cursor: {
+          col: state.cursor.col + 1
         }
       });
     }

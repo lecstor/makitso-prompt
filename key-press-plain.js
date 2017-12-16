@@ -1,6 +1,14 @@
 const { setPath, setPatch } = require("./immutably.js");
 
-module.exports = {
+const keyPressPlain = {
+  keyPress(state, press) {
+    if (press.key.ctrl || press.key.meta) {
+      return state;
+    }
+    return this[press.key.name]
+      ? this[press.key.name](state, press)
+      : this.default(state, press);
+  },
   return(state) {
     return setPatch(state, {
       input: {
@@ -47,3 +55,5 @@ module.exports = {
     return state;
   }
 };
+
+module.exports = keyPressPlain;

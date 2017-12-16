@@ -1,11 +1,11 @@
 const Prompt = require("./prompt");
 
-const keyPressPlain = require("./key-press-plain");
-const keyPressCtrl = require("./key-press-ctrl");
+// const keyPressPlain = require("./key-press-plain");
+// const keyPressCtrl = require("./key-press-ctrl");
 
 const prompt = Prompt({ prompt: "default> " });
 
-Object.assign(prompt, { keyPressPlain, keyPressCtrl });
+// Object.assign(prompt, { keyPressers: [keyPressPlain, keyPressCtrl] });
 
 prompt
   .start()

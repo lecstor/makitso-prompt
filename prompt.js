@@ -9,8 +9,8 @@ const stringWidth = require("string-width");
 
 const { setPath, setPatch } = require("./immutably.js");
 
-// const { StringDecoder } = require("string_decoder");
-// const { getStringWidth } = require("./internal/readline");
+const keyPressPlain = require("./key-press-plain");
+const keyPressCtrl = require("./key-press-ctrl");
 
 const debug = require("./debug");
 
@@ -18,7 +18,9 @@ function Prompt({ prompt = "yay> " } = {}) {
   return {
     input: process.stdin,
     output: process.stdout,
+
     defaultPrompt: prompt,
+
     state: {
       prompt: {
         text: "",
@@ -36,61 +38,23 @@ function Prompt({ prompt = "yay> " } = {}) {
         }
       }
     },
-    // prevState: {
-    //   prompt: {
-    //     text: "",
-    //     width: 0
-    //   },
-    //   command: {
-    //     text: "",
-    //     cursor: { col: 0, row: 0 }
-    //   },
-    //   input: {
-    //     pause: true,
-    //     rawMode: false,
-    //     listener: {
-    //       keypress: null
-    //     }
-    //   }
-    // },
 
-    keyPressPlain: {},
-    keyPressCtrl: {},
-    keyPressShiftCtrl: {},
-    keyPressMeta: {},
+    keyPressers: [keyPressPlain, keyPressCtrl],
 
     setPrompt(text) {
       const width = stringWidth(text);
       this.state = setPatch(this.state, { prompt: { text, width } });
     },
 
-    onKeyPress({ press, state }) {
-      const keyName = press.key.name;
-      if (press.key.shift && press.key.ctrl) {
-        if (this.keyPressShiftCtrl[keyName]) {
-          state = this.keyPressShiftCtrl[keyName](state, press);
-        }
-      } else if (press.key.ctrl) {
-        if (this.keyPressCtrl[keyName]) {
-          state = this.keyPressCtrl[keyName](state, press);
-        }
-      } else if (press.key.meta) {
-        if (this.keyPressMeta[keyName]) {
-          state = this.keyPressMeta[keyName](state, press);
-        }
-      } else if (this.keyPressPlain[keyName]) {
-        state = this.keyPressPlain[keyName](state, press);
-      } else {
-        state = this.keyPressPlain.default(state, press);
-      }
+    processKeyPress(state, press) {
+      _forEach(this.keyPressers, presser => {
+        state = presser.keyPress(state, press);
+      });
       return state;
     },
 
-    onkeypress: function(str, key) {
-      const state = this.onKeyPress({
-        press: { str, key },
-        state: this.state
-      });
+    onKeyPress: function(str, key) {
+      const state = this.processKeyPress(this.state, { str, key });
 
       this.applyState(state);
 
@@ -119,7 +83,7 @@ function Prompt({ prompt = "yay> " } = {}) {
           pause: false,
           listener: {
             keypress: (s, k) => {
-              this.onkeypress(s, k);
+              this.onKeyPress(s, k);
             }
           }
         },

@@ -14,50 +14,15 @@ const { setPath, setPatch } = require("./immutably.js");
 
 const debug = require("./debug");
 
-function applyStateChanges({ oldState, newState, input, output }) {
-  if (oldState === newState) {
-    debug("No state change");
-    return;
-  }
-  if (oldState.input !== newState.input) {
-    debug("state input changed");
-    const oldInput = oldState.input;
-    const newInput = newState.input;
-
-    if (oldInput.rawMode !== newInput.rawMode) {
-      debug(`set raw mode: ${newInput.rawMode}`);
-      input.setRawMode(newInput.rawMode);
-    }
-    if (oldInput.listener !== newInput.listener) {
-      _forEach(newInput.listener, (val, key) => {
-        if (val !== oldInput.listener[key]) {
-          if (val) {
-            input.on(key, val);
-          } else {
-            input.removeListener(key, oldInput.listener[key]);
-          }
-        }
-      });
-    }
-    if (oldInput.pause !== newInput.pause) {
-      debug({ inputPause: newInput.pause });
-      if (newInput.pause) {
-        input.pause();
-      } else {
-        input.resume();
-      }
-    }
-  }
-}
-
-function Prompt() {
+function Prompt({ prompt = "yay> " } = {}) {
   return {
     input: process.stdin,
     output: process.stdout,
+    defaultPrompt: prompt,
     state: {
       prompt: {
-        text: "yay> ",
-        width: 5
+        text: "",
+        width: 0
       },
       command: {
         text: "",
@@ -71,10 +36,23 @@ function Prompt() {
         }
       }
     },
-    renderedState: {
-      command: { text: "" },
-      prompt: { text: "" }
-    },
+    // prevState: {
+    //   prompt: {
+    //     text: "",
+    //     width: 0
+    //   },
+    //   command: {
+    //     text: "",
+    //     cursor: { col: 0, row: 0 }
+    //   },
+    //   input: {
+    //     pause: true,
+    //     rawMode: false,
+    //     listener: {
+    //       keypress: null
+    //     }
+    //   }
+    // },
 
     keyPressPlain: {},
     keyPressCtrl: {},
@@ -86,74 +64,56 @@ function Prompt() {
       this.state = setPatch(this.state, { prompt: { text, width } });
     },
 
-    onKeyPressPre({ press, state }) {
-      return { press, state };
-    },
-
     onKeyPress({ press, state }) {
       const keyName = press.key.name;
-      // Ignore escape key - Fixes #2876
-      if (keyName === "escape") {
-        return { state };
-      }
       if (press.key.shift && press.key.ctrl) {
         if (this.keyPressShiftCtrl[keyName]) {
-          ({ press, state } = this.keyPressShiftCtrl[keyName](state, press));
+          state = this.keyPressShiftCtrl[keyName](state, press);
         }
       } else if (press.key.ctrl) {
         if (this.keyPressCtrl[keyName]) {
-          ({ press, state } = this.keyPressCtrl[keyName](state, press));
+          state = this.keyPressCtrl[keyName](state, press);
         }
       } else if (press.key.meta) {
         if (this.keyPressMeta[keyName]) {
-          ({ press, state } = this.keyPressMeta[keyName](state, press));
+          state = this.keyPressMeta[keyName](state, press);
         }
       } else if (this.keyPressPlain[keyName]) {
-        ({ press, state } = this.keyPressPlain[keyName](state, press));
+        state = this.keyPressPlain[keyName](state, press);
       } else {
-        ({ press, state } = this.keyPressPlain.default(state, press));
+        state = this.keyPressPlain.default(state, press);
       }
-      return { press, state };
-    },
-
-    onKeyPressPost({ press, state }) {
-      return { press, state };
+      return state;
     },
 
     onkeypress: function(str, key) {
-      debug({ str, key });
-      let state = this.state;
-      let press = { str, key };
-      ({ press, state } = this.onKeyPressPre({ press, state }));
-      if (press) {
-        ({ press, state } = this.onKeyPress({ press, state }));
-      }
-      if (press) {
-        ({ press, state } = this.onKeyPressPost({ press, state }));
-      }
-      debug({ state });
-      this.applyStateChanges(state);
-      this.render();
-      if (state.resolve) {
+      const state = this.onKeyPress({
+        press: { str, key },
+        state: this.state
+      });
+
+      this.applyState(state);
+
+      if (state.returnCommand) {
         cursorTo(this.output, 0);
         moveCursor(this.output, 0, 1);
         this.resolve(state.command.text.trim());
       }
     },
 
-    applyStateChanges: function(state) {
-      const oldState = this.state;
-      const newState = state;
-      const input = this.input;
-      const output = this.output;
-      this.state = state;
-      applyStateChanges({ oldState, newState, input, output });
+    applyState(state) {
+      if (state !== this.state) {
+        const prevState = this.state;
+        this.updateInput({ state, prevState, input: this.input });
+        this.render({ state, prevState, output: this.output });
+        this.state = state;
+      }
     },
 
-    start() {
+    start({ prompt = this.defaultPrompt } = {}) {
       emitKeypressEvents(this.input);
       const state = setPatch(this.state, {
-        resolve: false,
+        returnCommand: false,
         input: {
           rawMode: true,
           pause: false,
@@ -163,6 +123,10 @@ function Prompt() {
             }
           }
         },
+        prompt: {
+          text: prompt,
+          width: stringWidth(prompt)
+        },
         command: {
           text: "",
           cursor: {
@@ -170,30 +134,57 @@ function Prompt() {
           }
         }
       });
-      this.applyStateChanges(state);
-      this.render();
+
+      this.applyState(state);
+
       return new Promise((resolve, reject) => {
         this.resolve = resolve;
         this.reject = reject;
       });
     },
 
-    render() {
-      if (this.renderedState !== this.state) {
-        const renderedPrompt = `${this.renderedState.prompt.text}${
-          this.renderedState.command.text
-        }`;
-        const newPrompt = `${this.state.prompt.text}${this.state.command.text}`;
-        if (renderedPrompt !== newPrompt) {
-          clearLine(this.output);
-          cursorTo(this.output, 0);
-          this.output.write(newPrompt);
+    render({ state, prevState, output }) {
+      debug({ renderState: state });
+      const renderedPrompt = `${prevState.prompt.text}${
+        prevState.command.text
+      }`;
+      const newPrompt = `${state.prompt.text}${state.command.text}`;
+      if (renderedPrompt !== newPrompt) {
+        clearLine(output);
+        cursorTo(output, 0);
+        output.write(newPrompt);
+      }
+      cursorTo(output, state.prompt.width + state.command.cursor.col);
+    },
+
+    updateInput({ prevState, state, input, output }) {
+      prevState = prevState.input;
+      state = state.input;
+      if (prevState !== state) {
+        debug("update input state");
+        if (prevState.rawMode !== state.rawMode) {
+          debug(`set raw mode: ${state.rawMode}`);
+          input.setRawMode(state.rawMode);
         }
-        cursorTo(
-          this.output,
-          this.state.prompt.width + this.state.command.cursor.col
-        );
-        this.renderedState = this.state;
+        if (prevState.listener !== state.listener) {
+          _forEach(state.listener, (val, key) => {
+            if (val !== prevState.listener[key]) {
+              if (val) {
+                input.on(key, val);
+              } else {
+                input.removeListener(key, prevState.listener[key]);
+              }
+            }
+          });
+        }
+        if (prevState.pause !== state.pause) {
+          debug({ inputPause: state.pause });
+          if (state.pause) {
+            input.pause();
+          } else {
+            input.resume();
+          }
+        }
       }
     }
   };

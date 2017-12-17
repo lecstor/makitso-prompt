@@ -31,14 +31,24 @@ const keyPressPlain = {
     return state;
   },
   backspace(state) {
-    return setPatch(state, {
-      command: {
-        text: state.command.text.slice(0, -1)
-      }
-    });
+    const { fromEnd } = state.cursor;
+    if (!fromEnd) {
+      return setPatch(state, {
+        command: {
+          text: state.command.text.slice(0, -1)
+        }
+      });
+    } else {
+      const { text } = state.command;
+      return setPatch(state, {
+        command: {
+          text: text.slice(0, -fromEnd - 1) + text.slice(-fromEnd)
+        }
+      });
+    }
   },
   delete(state) {
-    const fromEnd = state.cursor.fromEnd;
+    const { fromEnd } = state.cursor;
     if (!fromEnd) {
       return state;
     }
@@ -73,18 +83,24 @@ const keyPressPlain = {
     }
     return setPatch(state, { cursor: { col, fromEnd } });
   },
+
   default(state, press) {
     if (press.str instanceof Buffer) {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
+      let { text } = state.command;
+      let { fromEnd } = state.cursor;
+      if (fromEnd) {
+        const start = text.slice(0, fromEnd);
+        const end = text.slice(fromEnd);
+        text = `${start}${press.str}${end}`;
+      } else {
+        text = `${text}${press.str}`;
+      }
       state = setPatch(state, {
-        command: {
-          text: `${state.command.text}${press.str}`
-        },
-        cursor: {
-          col: state.cursor.col + 1
-        }
+        command: { text },
+        cursor: { col: state.cursor.col + 1 }
       });
     }
     return state;

@@ -1,5 +1,5 @@
 const { applyPatch } = require("./immutably.js");
-const { moveCursor } = require("./state");
+const { deleteLeft, deleteRight, moveCursor } = require("./key-press-actions");
 
 const keyPressPlain = {
   keyPress(state, press) {
@@ -10,7 +10,7 @@ const keyPressPlain = {
       ? this[press.key.name](state, press)
       : this.default(state, press);
   },
-  return(state) {
+  return: state => {
     return applyPatch(state, {
       input: {
         rawMode: false,
@@ -22,55 +22,15 @@ const keyPressPlain = {
       returnCommand: true
     });
   },
-  enter(state) {
-    return state;
-  },
-  escape(state) {
-    return state;
-  },
-  tab(state) {
-    return state;
-  },
-  backspace(state) {
-    const { fromEnd } = state.cursor;
-    if (!fromEnd) {
-      return applyPatch(state, {
-        command: {
-          text: state.command.text.slice(0, -1)
-        }
-      });
-    } else {
-      const { text } = state.command;
-      return applyPatch(state, {
-        command: {
-          text: text.slice(0, -fromEnd - 1) + text.slice(-fromEnd)
-        }
-      });
-    }
-  },
-  delete(state) {
-    const { fromEnd } = state.cursor;
-    if (!fromEnd) {
-      return state;
-    }
-    const command = state.command.text;
-    return applyPatch(state, {
-      command: {
-        text: command.slice(0, -fromEnd + 1) + command.slice(-fromEnd + 2)
-      },
-      cursor: {
-        fromEnd: state.cursor.fromEnd - 1
-      }
-    });
-  },
-  left(state) {
-    return moveCursor(state, -1);
-  },
-  right(state) {
-    return moveCursor(state, +1);
-  },
+  enter: state => state,
+  escape: state => state,
+  tab: state => state,
+  backspace: state => deleteLeft(state),
+  delete: state => deleteRight(state),
+  left: state => moveCursor(state, -1),
+  right: state => moveCursor(state, +1),
 
-  default(state, press) {
+  default: (state, press) => {
     if (press.str instanceof Buffer) {
       press.str = press.str.toString("utf-8");
     }

@@ -42,16 +42,16 @@ function Prompt({ prompt = "yay> " } = {}) {
 
     keyPressers: [keyPressPlain, keyPressCtrl],
 
-    processKeyPress(state, press) {
-      _forEach(this.keyPressers, presser => {
-        state = presser.keyPress(state, press);
-      });
+    processKeyPress: async function(state, press) {
+      for (const presser of this.keyPressers) {
+        state = await presser.keyPress(state, press);
+      }
       return state;
     },
 
-    onKeyPress: function(str, key) {
+    onKeyPress: async function(str, key) {
       debug({ keyPress: key });
-      let state = this.processKeyPress(this.state, { str, key });
+      let state = await this.processKeyPress(this.state, { str, key });
       if (this.cursorMoved(this.state, state)) {
         const displayPos = getDisplayPos(
           state.prompt.text + state.command.text,

@@ -3,7 +3,7 @@ const { deleteLeft, deleteRight, moveCursor } = require("./key-press-actions");
 
 const keyPressPlain = {
   keyPress(state, press) {
-    if (press.key.ctrl || press.key.meta) {
+    if (press.key.ctrl || press.key.meta || state.mode !== "default") {
       return state;
     }
     return this[press.key.name]

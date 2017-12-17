@@ -6,6 +6,9 @@ module.exports = {
     if (!press.key.ctrl) {
       return state;
     }
+    if (state.mode !== "default" && press.key.name !== "c") {
+      return state;
+    }
     return this[press.key.name] ? this[press.key.name](state, press) : state;
   },
   c: state => {

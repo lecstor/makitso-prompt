@@ -20,9 +20,9 @@ function Prompt({ prompt = "yay> " } = {}) {
     input: process.stdin,
     output: process.stdout,
 
-    defaultPrompt: prompt,
-
     state: {
+      defaultPrompt: prompt,
+      mode: "default",
       prompt: {
         text: "",
         width: 0
@@ -41,11 +41,6 @@ function Prompt({ prompt = "yay> " } = {}) {
     },
 
     keyPressers: [keyPressPlain, keyPressCtrl],
-
-    setPrompt(text) {
-      const width = stringWidth(text);
-      this.state = applyPatch(this.state, { prompt: { text, width } });
-    },
 
     processKeyPress(state, press) {
       _forEach(this.keyPressers, presser => {
@@ -175,7 +170,7 @@ function Prompt({ prompt = "yay> " } = {}) {
       }
     },
 
-    start({ prompt = this.defaultPrompt } = {}) {
+    start({ prompt = this.state.defaultPrompt } = {}) {
       emitKeypressEvents(this.input);
       const promptWidth = stringWidth(prompt);
       const state = applyPatch(this.state, {

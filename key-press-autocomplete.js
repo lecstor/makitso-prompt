@@ -4,6 +4,9 @@ const debug = require("./debug");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
+    if (state.mode !== "default") {
+      return state;
+    }
     const command = state.command.text;
     debug({ command: `"${command}"` });
     if (press.key.name === "tab") {

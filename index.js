@@ -1,14 +1,19 @@
 const Prompt = require("./prompt");
 
 const autoComplete = require("./key-press-autocomplete");
+const history = require("./key-press-history");
 
 const prompt = Prompt({ prompt: "default> " });
 
-Object.assign(prompt, { keyPressers: [...prompt.keyPressers, autoComplete] });
+Object.assign(prompt, {
+  keyPressers: [...prompt.keyPressers, autoComplete, history]
+});
 
-prompt
-  .start()
-  .then(command => console.log(`received1: "${command}"`))
-  .then(() => prompt.start({ prompt: "other> " }))
-  .then(command => console.log(`received2: "${command}"`))
-  .catch(console.error);
+function newPrompt() {
+  return prompt.start().then(command => {
+    console.log(`received: "${command}"`);
+    return newPrompt();
+  });
+}
+
+newPrompt();

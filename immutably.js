@@ -34,8 +34,12 @@ function setPath(state, path, value) {
  */
 function applyPatch(state, patch) {
   _forEach(patch, (value, key) => {
-    if (_isObject(value) && !_isFunction(value)) {
-      state = { ...state, [key]: applyPatch(state[key], value) };
+    if (_isObject(value) && !_isFunction(value) && !Array.isArray(value)) {
+      if (state[key]) {
+        state = { ...state, [key]: applyPatch(state[key], value) };
+      } else {
+        state[key] = value;
+      }
     } else {
       state = { ...state, [key]: value };
     }

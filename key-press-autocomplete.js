@@ -1,4 +1,4 @@
-const { setPatch } = require("./immutably.js");
+const { applyPatch } = require("./immutably.js");
 
 const debug = require("./debug");
 
@@ -9,7 +9,7 @@ const keyPressAutoComplete = {
     if (press.key.name === "tab") {
       // complete the command
       const text = `${command}completed`;
-      return setPatch(state, {
+      return applyPatch(state, {
         command: {
           text,
           cursor: { col: null } // tell render to calculate cursor position
@@ -18,7 +18,7 @@ const keyPressAutoComplete = {
       });
     }
 
-    return setPatch(state, {
+    return applyPatch(state, {
       footer: "possible command completions possible command completions"
     });
   }

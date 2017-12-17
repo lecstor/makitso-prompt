@@ -32,10 +32,10 @@ function setPath(state, path, value) {
  * @param {Object} patch - patch to apply
  * @returns {Object} updated state
  */
-function setPatch(state, patch) {
+function applyPatch(state, patch) {
   _forEach(patch, (value, key) => {
     if (_isObject(value) && !_isFunction(value)) {
-      state = { ...state, [key]: setPatch(state[key], value) };
+      state = { ...state, [key]: applyPatch(state[key], value) };
     } else {
       state = { ...state, [key]: value };
     }
@@ -43,4 +43,4 @@ function setPatch(state, patch) {
   return { ...state };
 }
 
-module.exports = { setPath, setPatch };
+module.exports = { setPath, applyPatch };

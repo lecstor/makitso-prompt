@@ -2,13 +2,12 @@ const _forEach = require("lodash/forEach");
 const {
   emitKeypressEvents,
   cursorTo,
-  clearLine,
   moveCursor,
   clearScreenDown
 } = require("readline");
 const stringWidth = require("string-width");
 
-const { setPath, setPatch } = require("./immutably.js");
+const { applyPatch } = require("./immutably.js");
 const { getDisplayPos } = require("./readline-funcs");
 
 const keyPressPlain = require("./key-press-plain");
@@ -45,7 +44,7 @@ function Prompt({ prompt = "yay> " } = {}) {
 
     setPrompt(text) {
       const width = stringWidth(text);
-      this.state = setPatch(this.state, { prompt: { text, width } });
+      this.state = applyPatch(this.state, { prompt: { text, width } });
     },
 
     processKeyPress(state, press) {
@@ -56,6 +55,7 @@ function Prompt({ prompt = "yay> " } = {}) {
     },
 
     onKeyPress: function(str, key) {
+      debug({ keyPress: key });
       let state = this.processKeyPress(this.state, { str, key });
       if (this.cursorMoved(this.state, state)) {
         const displayPos = getDisplayPos(
@@ -71,7 +71,7 @@ function Prompt({ prompt = "yay> " } = {}) {
             displayPos.cols = this.output.columns - fromEndPrev;
           }
         }
-        state = setPatch(state, {
+        state = applyPatch(state, {
           cursor: { col: displayPos.cols, row: displayPos.rows }
         });
       }
@@ -177,7 +177,7 @@ function Prompt({ prompt = "yay> " } = {}) {
     start({ prompt = this.defaultPrompt } = {}) {
       emitKeypressEvents(this.input);
       const promptWidth = stringWidth(prompt);
-      const state = setPatch(this.state, {
+      const state = applyPatch(this.state, {
         returnCommand: false,
         input: {
           rawMode: true,

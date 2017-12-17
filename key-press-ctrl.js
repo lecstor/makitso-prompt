@@ -1,4 +1,4 @@
-const { setPatch } = require("./immutably.js");
+const { applyPatch } = require("./immutably.js");
 
 module.exports = {
   keyPress(state, press) {
@@ -8,7 +8,7 @@ module.exports = {
     return this[press.key.name] ? this[press.key.name](state, press) : state;
   },
   c(state) {
-    return setPatch(state, {
+    return applyPatch(state, {
       input: {
         rawMode: false,
         pause: true,

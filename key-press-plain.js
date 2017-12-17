@@ -1,4 +1,5 @@
-const { setPath, setPatch } = require("./immutably.js");
+const { applyPatch } = require("./immutably.js");
+const { moveCursor } = require("./state");
 
 const keyPressPlain = {
   keyPress(state, press) {
@@ -10,7 +11,7 @@ const keyPressPlain = {
       : this.default(state, press);
   },
   return(state) {
-    return setPatch(state, {
+    return applyPatch(state, {
       input: {
         rawMode: false,
         pause: true,
@@ -33,14 +34,14 @@ const keyPressPlain = {
   backspace(state) {
     const { fromEnd } = state.cursor;
     if (!fromEnd) {
-      return setPatch(state, {
+      return applyPatch(state, {
         command: {
           text: state.command.text.slice(0, -1)
         }
       });
     } else {
       const { text } = state.command;
-      return setPatch(state, {
+      return applyPatch(state, {
         command: {
           text: text.slice(0, -fromEnd - 1) + text.slice(-fromEnd)
         }
@@ -53,7 +54,7 @@ const keyPressPlain = {
       return state;
     }
     const command = state.command.text;
-    return setPatch(state, {
+    return applyPatch(state, {
       command: {
         text: command.slice(0, -fromEnd + 1) + command.slice(-fromEnd + 2)
       },
@@ -63,25 +64,10 @@ const keyPressPlain = {
     });
   },
   left(state) {
-    const pos = state.cursor.col > 0 ? state.cursor.col - 1 : 0;
-    return setPatch(state, {
-      cursor: {
-        col: pos,
-        fromEnd: state.cursor.fromEnd + 1
-      }
-    });
+    return moveCursor(state, -1);
   },
   right(state) {
-    let col;
-    let fromEnd;
-    if (state.cursor.col < state.prompt.width + state.command.text.length) {
-      col = state.cursor.col + 1;
-      fromEnd = state.cursor.fromEnd - 1;
-    } else {
-      col = state.command.text.length;
-      fromEnd = 0;
-    }
-    return setPatch(state, { cursor: { col, fromEnd } });
+    return moveCursor(state, +1);
   },
 
   default(state, press) {
@@ -98,7 +84,7 @@ const keyPressPlain = {
       } else {
         text = `${text}${press.str}`;
       }
-      state = setPatch(state, {
+      state = applyPatch(state, {
         command: { text },
         cursor: { col: state.cursor.col + 1 }
       });

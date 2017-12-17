@@ -110,7 +110,7 @@ function Prompt({ prompt = "yay> " } = {}) {
     },
 
     render({ state, prevState, output }) {
-      debug({ renderState: state });
+      debug({ render: { prevState, state } });
       if (this.commandlineChanged(prevState, state)) {
         const newPrompt = `${state.prompt.text}${state.command.text}`;
 
@@ -123,6 +123,7 @@ function Prompt({ prompt = "yay> " } = {}) {
           }
           moveCursor(output, 0, -state.cursor.row);
         }
+        cursorTo(output, 0);
         clearScreenDown(output);
         cursorTo(output, 0);
         output.write(newPrompt);

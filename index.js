@@ -1,11 +1,10 @@
 const Prompt = require("./prompt");
 
-// const keyPressPlain = require("./key-press-plain");
-// const keyPressCtrl = require("./key-press-ctrl");
+const autoComplete = require("./key-press-autocomplete");
 
 const prompt = Prompt({ prompt: "default> " });
 
-// Object.assign(prompt, { keyPressers: [keyPressPlain, keyPressCtrl] });
+Object.assign(prompt, { keyPressers: [...prompt.keyPressers, autoComplete] });
 
 prompt
   .start()

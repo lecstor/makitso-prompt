@@ -76,6 +76,7 @@ function Prompt({ prompt = "yay> " } = {}) {
       if (state.returnCommand) {
         cursorTo(this.output, 0);
         moveCursor(this.output, 0, 1);
+        clearScreenDown(this.output);
         this.resolve(state.command.text.trim());
       }
     },

@@ -10,25 +10,14 @@ const keyPressPlain = {
       ? this[press.key.name](state, press)
       : this.default(state, press);
   },
-  return: state => {
-    return applyPatch(state, {
-      input: {
-        rawMode: false,
-        pause: true,
-        listener: {
-          keypress: null
-        }
-      },
-      returnCommand: true
-    });
-  },
-  enter: state => state,
-  escape: state => state,
-  tab: state => state,
   backspace: state => deleteLeft(state),
   delete: state => deleteRight(state),
+  enter: state => state,
+  escape: state => state,
   left: state => moveCursor(state, -1),
+  return: state => applyPatch(state, { returnCommand: true }),
   right: state => moveCursor(state, +1),
+  tab: state => state,
 
   default: (state, press) => {
     if (press.str instanceof Buffer) {

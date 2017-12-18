@@ -11,21 +11,8 @@ module.exports = {
     }
     return this[press.key.name] ? this[press.key.name](state, press) : state;
   },
-  c: state => {
-    return applyPatch(state, {
-      input: {
-        rawMode: false,
-        pause: true,
-        listener: {
-          keypress: null
-        }
-      },
-      command: { text: "\n" },
-      cursor: { col: 0, row: 0 },
-      prompt: { text: "", width: 0 }
-    });
-  },
   b: state => moveCursor(state, -1),
+  c: state => applyPatch(state, { exit: true }),
   d: state => deleteRight(state),
   f: state => moveCursor(state, 1),
   h: state => deleteLeft(state)

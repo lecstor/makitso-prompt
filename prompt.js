@@ -71,12 +71,22 @@ function Prompt({ prompt = "yay> " } = {}) {
           });
         }
 
+        if (state.exit || state.returnCommand) {
+          state = applyPatch(state, {
+            input: { rawMode: false, pause: true, listener: { keypress: null } }
+          });
+        }
+
         this.applyState(state);
 
-        if (state.returnCommand) {
+        if (state.exit || state.returnCommand) {
           cursorTo(this.output, 0);
           moveCursor(this.output, 0, 1);
           clearScreenDown(this.output);
+        }
+
+        if (state.returnCommand) {
+          this.state = applyPatch(state, { command: { text: null } });
           this.resolve(state.command.text.trim());
         }
       } catch (error) {

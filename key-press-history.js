@@ -53,7 +53,7 @@ const keyPressAutoComplete = {
   pushHistory(state) {
     const command = state.command.text;
     const history = this.getHistory(state);
-    if (command === history[0]) {
+    if (!command || command === history[0]) {
       return applyPatch(state, {
         history: { commands: ["", ...history] }
       });

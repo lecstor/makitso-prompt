@@ -3,29 +3,6 @@ const _isObject = require("lodash/isObject");
 const _isFunction = require("lodash/isFunction");
 
 /**
- * immutably set a value for a deep path
- *
- * @param {Object} state - app state
- * @param {String|Array} path - path to value
- * @param {*} value - new value
- * @returns {Object} updated state
- */
-function setPath(state, path, value) {
-  let pathArray = path;
-  if (!Array.isArray(path)) {
-    pathArray = path.split(".");
-  }
-  if (pathArray.length === 1) {
-    return { ...state, [pathArray[0]]: value };
-  }
-  const next = pathArray.shift();
-  return {
-    ...state,
-    [next]: setPath(state[next], pathArray, value)
-  };
-}
-
-/**
  * immutably patch an object
  *
  * @param {Object} state - app state
@@ -47,4 +24,4 @@ function applyPatch(state, patch) {
   return { ...state };
 }
 
-module.exports = { setPath, applyPatch };
+module.exports = { applyPatch };

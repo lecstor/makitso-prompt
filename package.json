@@ -6,8 +6,8 @@
   "author": "jason@lecstor.com",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.3.0",
     "prettyjson": "^1.2.1",
-    "string-width": "^2.1.1",
     "term-size": "^1.2.0"
   },
   "devDependencies": {

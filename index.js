@@ -1,9 +1,10 @@
+const chalk = require("chalk");
 const Prompt = require("./prompt");
 
 const autoComplete = require("./key-press-autocomplete");
 const history = require("./key-press-history");
 
-const prompt = Prompt({ prompt: "default> " });
+const prompt = Prompt({ prompt: chalk`{blue default> }` });
 
 Object.assign(prompt, {
   keyPressers: [...prompt.keyPressers, autoComplete, history]
@@ -16,4 +17,4 @@ function newPrompt() {
   });
 }
 
-newPrompt();
+newPrompt().catch(console.error);

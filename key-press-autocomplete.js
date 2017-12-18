@@ -4,7 +4,7 @@ const debug = require("./debug");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
-    if (state.mode !== "default") {
+    if (state.mode !== "command") {
       return state;
     }
     const command = state.command.text;

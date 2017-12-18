@@ -5,10 +5,9 @@ const {
   moveCursor,
   clearScreenDown
 } = require("readline");
-const stringWidth = require("string-width");
 
 const { applyPatch } = require("./immutably.js");
-const { getDisplayPos } = require("./readline-funcs");
+const { getDisplayPos, getStringWidth } = require("./readline-funcs");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -22,7 +21,7 @@ function Prompt({ prompt = "yay> " } = {}) {
 
     state: {
       defaultPrompt: prompt,
-      mode: "default",
+      mode: "command",
       prompt: {
         text: "",
         width: 0
@@ -51,33 +50,38 @@ function Prompt({ prompt = "yay> " } = {}) {
 
     onKeyPress: async function(str, key) {
       debug({ keyPress: key });
-      let state = await this.processKeyPress(this.state, { str, key });
-      if (this.cursorMoved(this.state, state)) {
-        const displayPos = getDisplayPos(
-          state.prompt.text + state.command.text,
-          this.output.columns || Infinity
-        );
-        if (state.cursor.fromEnd) {
-          if (state.cursor.fromEnd < displayPos.cols) {
-            displayPos.cols -= state.cursor.fromEnd;
-          } else {
-            const fromEndPrev = state.cursor.fromEnd - displayPos.cols;
-            displayPos.rows -= 1;
-            displayPos.cols = this.output.columns - fromEndPrev;
+      try {
+        let state = await this.processKeyPress(this.state, { str, key });
+        if (this.cursorMoved(this.state, state)) {
+          const displayPos = getDisplayPos(
+            state.prompt.text + state.command.text,
+            this.output.columns || Infinity
+          );
+          if (state.cursor.fromEnd) {
+            if (state.cursor.fromEnd < displayPos.cols) {
+              displayPos.cols -= state.cursor.fromEnd;
+            } else {
+              const fromEndPrev = state.cursor.fromEnd - displayPos.cols;
+              displayPos.rows -= 1;
+              displayPos.cols = this.output.columns - fromEndPrev;
+            }
           }
+          state = applyPatch(state, {
+            cursor: { col: displayPos.cols, row: displayPos.rows }
+          });
         }
-        state = applyPatch(state, {
-          cursor: { col: displayPos.cols, row: displayPos.rows }
-        });
-      }
 
-      this.applyState(state);
+        this.applyState(state);
 
-      if (state.returnCommand) {
-        cursorTo(this.output, 0);
-        moveCursor(this.output, 0, 1);
-        clearScreenDown(this.output);
-        this.resolve(state.command.text.trim());
+        if (state.returnCommand) {
+          cursorTo(this.output, 0);
+          moveCursor(this.output, 0, 1);
+          clearScreenDown(this.output);
+          this.resolve(state.command.text.trim());
+        }
+      } catch (error) {
+        console.error(error);
+        process.exit();
       }
     },
 
@@ -173,7 +177,7 @@ function Prompt({ prompt = "yay> " } = {}) {
 
     start({ prompt = this.state.defaultPrompt } = {}) {
       emitKeypressEvents(this.input);
-      const promptWidth = stringWidth(prompt);
+      const promptWidth = getStringWidth(prompt);
       const state = applyPatch(this.state, {
         returnCommand: false,
         input: {

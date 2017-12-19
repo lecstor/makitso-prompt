@@ -27,8 +27,8 @@ const keyPressPlain = {
       let { text } = state.command;
       let { fromEnd } = state.cursor;
       if (fromEnd) {
-        const start = text.slice(0, fromEnd);
-        const end = text.slice(fromEnd);
+        const start = text.slice(0, -fromEnd);
+        const end = text.slice(-fromEnd);
         text = `${start}${press.str}${end}`;
       } else {
         text = `${text}${press.str}`;

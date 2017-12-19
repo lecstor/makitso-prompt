@@ -7,21 +7,23 @@ const {
 } = require("readline");
 
 const { applyPatch } = require("./immutably.js");
-const { getDisplayPos, getStringWidth } = require("./readline-funcs");
+const { getDisplayPos } = require("./readline-funcs");
+const { setPrompt } = require("./state");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
 
 const debug = require("./debug");
 
-function Prompt({ prompt = "yay> " } = {}) {
+function Prompt(options = {}) {
+  const { prompt = "makitso> ", mode = "command" } = options;
   return {
     input: process.stdin,
     output: process.stdout,
 
     state: {
       defaultPrompt: prompt,
-      mode: "command",
+      mode,
       prompt: {
         text: "",
         width: 0
@@ -40,6 +42,36 @@ function Prompt({ prompt = "yay> " } = {}) {
     },
 
     keyPressers: [keyPressPlain, keyPressCtrl],
+
+    start(options = {}) {
+      const { prompt, mode } = options;
+
+      emitKeypressEvents(this.input);
+
+      let state = setPrompt(this.state, prompt || this.state.defaultPrompt);
+      state = applyPatch(state, {
+        returnCommand: false,
+        mode: mode || this.state.mode,
+        input: {
+          rawMode: true,
+          pause: false,
+          listener: {
+            keypress: (s, k) => {
+              this.onKeyPress(s, k);
+            }
+          }
+        },
+        command: { text: "" },
+        cursor: { col: state.prompt.width, row: 0 }
+      });
+
+      this.applyState(state);
+
+      return new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
+      });
+    },
 
     processKeyPress: async function(state, press) {
       for (const presser of this.keyPressers) {
@@ -183,41 +215,6 @@ function Prompt({ prompt = "yay> " } = {}) {
           }
         }
       }
-    },
-
-    start({ prompt = this.state.defaultPrompt } = {}) {
-      emitKeypressEvents(this.input);
-      const promptWidth = getStringWidth(prompt);
-      const state = applyPatch(this.state, {
-        returnCommand: false,
-        input: {
-          rawMode: true,
-          pause: false,
-          listener: {
-            keypress: (s, k) => {
-              this.onKeyPress(s, k);
-            }
-          }
-        },
-        prompt: {
-          text: prompt,
-          width: promptWidth
-        },
-        command: {
-          text: ""
-        },
-        cursor: {
-          col: promptWidth,
-          row: 0
-        }
-      });
-
-      this.applyState(state);
-
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
-      });
     }
   };
 }

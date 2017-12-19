@@ -17,6 +17,9 @@ const keyPressAutoComplete = {
   },
 
   prompt: chalk`{green history> }`,
+  noHistory: {
+    footer: chalk`{hex('#de7600') You have no history to browse}`
+  },
 
   /**
    * put the prompt in history mode
@@ -25,9 +28,13 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   activateHistory(state) {
-    state = applyPatch(state, { mode: "history", history: { index: 0 } });
-    state = setPrompt(state, this.prompt);
-    return this.pressKey.up(state);
+    if (state.history && state.history.commands.length > 1) {
+      state = applyPatch(state, { mode: "history", history: { index: 0 } });
+      state = setPrompt(state, this.prompt);
+      return this.pressKey.up(state);
+    } else {
+      return applyPatch(state, this.noHistory);
+    }
   },
 
   /**

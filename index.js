@@ -69,6 +69,7 @@ function Prompt(options = {}) {
         command: { text: "" },
         cursor: { col: prompt.width, row: 0, fromEnd: 0 }
       });
+      state = this.startState(state);
 
       this.render({ state, prevState: this.state, output: this.output });
       this.state = state;
@@ -136,6 +137,10 @@ function Prompt(options = {}) {
       }
     },
 
+    startState(state) {
+      return state;
+    },
+
     /**
      * update state so we don't render anything
      *
@@ -200,9 +205,17 @@ function Prompt(options = {}) {
       return state.header !== prevState.header;
     },
 
+    footerChanged(prevState, state) {
+      return state.footer !== prevState.footer;
+    },
+
+    // if header change it may be spanning a different number of lines
+    // if footer changed we need to render commandline so it clears the footer..
+    // this could be better..
     commandlineNeedsRender(prevState, state) {
       return (
         this.headerChanged(prevState, state) ||
+        this.footerChanged(prevState, state) ||
         this.commandlineChanged(prevState, state)
       );
     },

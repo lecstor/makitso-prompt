@@ -14,9 +14,9 @@ const keyPressAutoComplete = {
       const text = `${command}completed`;
       return applyPatch(state, {
         command: {
-          text,
-          cursor: { col: null } // tell render to calculate cursor position
+          text
         },
+        cursor: { col: null }, // tell render to calculate cursor position
         footer: ""
       });
     }

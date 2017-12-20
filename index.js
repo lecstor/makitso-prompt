@@ -10,8 +10,14 @@ Object.assign(prompt, {
   keyPressers: [...prompt.keyPressers, autoComplete, history]
 });
 
+const options = {
+  header: "What do you think?",
+  prompt: "answer> ",
+  footer: "There is no spoon"
+};
+
 function newPrompt() {
-  return prompt.start().then(command => {
+  return prompt.start(options).then(command => {
     console.log(`received: "${command}"`);
     return newPrompt();
   });

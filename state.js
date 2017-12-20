@@ -6,6 +6,4 @@ function setPrompt(state, text) {
   return applyPatch(state, { prompt: { text, width } });
 }
 
-module.exports = {
-  setPrompt
-};
+module.exports = { setPrompt };

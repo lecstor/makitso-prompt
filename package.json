@@ -1,14 +1,13 @@
 {
-  "name": "makitso-command",
+  "name": "makitso-prompt",
   "version": "1.0.0",
-  "description": "a commandline prompt",
+  "description": "a terminal prompt",
   "main": "index.js",
   "author": "jason@lecstor.com",
   "license": "MIT",
   "dependencies": {
     "chalk": "^2.3.0",
-    "prettyjson": "^1.2.1",
-    "term-size": "^1.2.0"
+    "prettyjson": "^1.2.1"
   },
   "devDependencies": {
     "eslint": "^4.9.0",

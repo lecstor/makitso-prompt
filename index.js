@@ -10,7 +10,7 @@ const {
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
 const { applyPatch } = require("./immutably.js");
-const { setPrompt, exitState, exitStateAfterRender } = require("./state");
+const { setPrompt } = require("./state");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -24,12 +24,10 @@ function Prompt(options = {}) {
     output: process.stdout,
 
     state: {
-      defaultPrompt: prompt,
+      defaultPrompt: setPrompt({}, prompt).prompt,
       mode,
-      prompt: setPrompt({}, prompt).prompt,
-      command: {
-        text: ""
-      },
+      command: { text: "" },
+      prompt: { text: "" },
       cursor: { col: 0, row: 0, fromEnd: 0 },
       input: {
         pause: true,
@@ -53,22 +51,23 @@ function Prompt(options = {}) {
      * @returns {Promise} resolves to the entered command
      */
     start(options = {}) {
-      const { prompt, mode, header, footer } = options;
+      const { mode, header, footer } = options;
 
       emitKeypressEvents(this.input);
 
       let state = this.state;
-      if (prompt) {
-        state = setPrompt(state, prompt);
-      }
+      let prompt = options.prompt
+        ? setPrompt({}, options.prompt).prompt
+        : state.defaultPrompt;
       state = this.listenToInput(state);
       state = applyPatch(state, {
         header,
         footer,
         mode,
+        prompt,
         returnCommand: false,
         command: { text: "" },
-        cursor: { col: state.prompt.width, row: 0, fromEnd: 0 }
+        cursor: { col: prompt.width, row: 0, fromEnd: 0 }
       });
 
       this.render({ state, prevState: this.state, output: this.output });
@@ -131,8 +130,9 @@ function Prompt(options = {}) {
           this.resolve(state.command.text.trim());
         }
       } catch (error) {
-        console.error(error);
-        process.exit();
+        this.reject(error);
+        // console.error(error);
+        // process.exit();
       }
     },
 

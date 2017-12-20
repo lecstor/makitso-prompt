@@ -141,8 +141,11 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     return(state) {
-      state = setPrompt(state, state.defaultPrompt);
-      return applyPatch(state, { mode: "command", history: { index: 0 } });
+      return applyPatch(state, {
+        mode: "command",
+        prompt: state.defaultPrompt,
+        history: { index: 0 }
+      });
     },
 
     /**
@@ -152,9 +155,9 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     escape(state) {
-      state = setPrompt(state, state.defaultPrompt);
-      state = applyPatch(state, { mode: "command" });
       return applyPatch(state, {
+        mode: "command",
+        prompt: state.defaultPrompt,
         command: { text: state.history.commands[0] },
         history: { index: 0 }
       });

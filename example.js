@@ -1,20 +1,24 @@
 const chalk = require("chalk");
-const Prompt = require("./prompt");
+const Prompt = require("./index");
+
+const debug = require("./debug");
 
 const autoComplete = require("./key-press-autocomplete");
 const history = require("./key-press-history");
 
 const prompt = Prompt({ prompt: chalk`{blue default> }` });
 
+debug({ promptState: prompt.state });
+
 Object.assign(prompt, {
   keyPressers: [...prompt.keyPressers, autoComplete, history]
 });
 
-const options = {
-  header: "What do you think?",
-  prompt: "answer> ",
-  footer: "There is no spoon"
-};
+const options = {};
+//   header: "What do you think?",
+//   prompt: "answer> ",
+//   footer: "There is no spoon"
+// };
 
 function newPrompt() {
   return prompt.start(options).then(command => {

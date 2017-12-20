@@ -11,6 +11,9 @@ const _isFunction = require("lodash/isFunction");
  */
 function applyPatch(state, patch) {
   _forEach(patch, (value, key) => {
+    if (value === undefined) {
+      return true;
+    }
     if (_isObject(value) && !_isFunction(value) && !Array.isArray(value)) {
       if (state[key]) {
         state = { ...state, [key]: applyPatch(state[key], value) };

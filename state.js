@@ -6,4 +6,9 @@ function setPrompt(state, text) {
   return applyPatch(state, { prompt: { text, width } });
 }
 
-module.exports = { setPrompt };
+function setMode(state, mode) {
+  state = applyPatch(state, { mode: null });
+  return applyPatch(state, { mode });
+}
+
+module.exports = { setPrompt, setMode };

@@ -3,7 +3,7 @@ const { deleteLeft, deleteRight, moveCursor } = require("./key-press-actions");
 
 const keyPressPlain = {
   keyPress(state, press) {
-    if (press.key.ctrl || press.key.meta || state.mode !== "command") {
+    if (press.key.ctrl || press.key.meta || !state.mode.command) {
       return state;
     }
     return this[press.key.name]
@@ -15,7 +15,13 @@ const keyPressPlain = {
   enter: state => state,
   escape: state => state,
   left: state => moveCursor(state, -1),
-  return: state => applyPatch(state, { returnCommand: true }),
+  return: state => {
+    let { text } = state.command;
+    if (text === "" && state.defaultCommand) {
+      state = applyPatch(state, { command: { text: state.defaultCommand } });
+    }
+    return applyPatch(state, { returnCommand: true });
+  },
   right: state => moveCursor(state, +1),
   tab: state => state,
 

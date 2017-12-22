@@ -1,4 +1,5 @@
 const _forEach = require("lodash/forEach");
+const chalk = require("chalk");
 
 const {
   emitKeypressEvents,
@@ -10,7 +11,7 @@ const {
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
 const { applyPatch } = require("./immutably.js");
-const { setPrompt } = require("./state");
+const { setPrompt, setMode } = require("./state");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -18,13 +19,16 @@ const keyPressCtrl = require("./key-press-ctrl");
 const debug = require("./debug");
 
 function Prompt(options = {}) {
-  const { prompt = "makitso> ", mode = "command" } = options;
+  const { prompt = "makitso> ", mode = { command: true } } = options;
   return {
     input: process.stdin,
     output: process.stdout,
 
     state: {
-      defaultPrompt: setPrompt({}, prompt).prompt,
+      default: {
+        prompt: setPrompt({}, prompt).prompt,
+        mode
+      },
       mode,
       command: { text: "" },
       prompt: { text: "" },
@@ -45,31 +49,41 @@ function Prompt(options = {}) {
      *
      * @param {Object} options -
      * @param {String} [options.prompt] - the prompt to use for the input line
-     * @param {String} [options.mode] - the mode to use
-     * @param {String} options.header - lines to put above prompt
-     * @param {String} options.footer - lines to put below prompt
+     * @param {Object} [options.mode] - the mode/s to activate
+     * @param {String} [options.header=""] - lines to put above prompt
+     * @param {String} [options.footer=""] - lines to put below prompt
+     * @param {Boolean} [options.secret] - when true the commandline input will be masked
      * @returns {Promise} resolves to the entered command
      */
     start(options = {}) {
-      const { mode, header, footer } = options;
+      const {
+        mode = { command: true },
+        header = "",
+        footer = "",
+        secret = false,
+        default: defaultCommand = ""
+      } = options;
 
       emitKeypressEvents(this.input);
 
       let state = this.state;
+      state = setMode(state, mode);
       let prompt = options.prompt
         ? setPrompt({}, options.prompt).prompt
-        : state.defaultPrompt;
+        : state.default.prompt;
       state = this.listenToInput(state);
       state = applyPatch(state, {
         header,
         footer,
-        mode,
         prompt,
+        secret,
+        defaultCommand,
         returnCommand: false,
         command: { text: "" },
-        cursor: { col: prompt.width, row: 0, fromEnd: 0 }
+        cursor: { col: null, row: 0, fromEnd: 0 }
       });
       state = this.startState(state);
+      state = this.updateCursorPos(state);
 
       this.render({ state, prevState: this.state, output: this.output });
       this.state = state;
@@ -87,27 +101,34 @@ function Prompt(options = {}) {
       return state;
     },
 
+    updateCursorPos(state) {
+      const endOfLinePos = getEndOfLinePos(
+        this.output.columns,
+        this.renderPromptLine(state)
+      );
+      if (state.cursor.fromEnd) {
+        if (state.cursor.fromEnd < endOfLinePos.cols) {
+          endOfLinePos.cols -= state.cursor.fromEnd;
+        } else {
+          const fromEndPrev = state.cursor.fromEnd - endOfLinePos.cols;
+          endOfLinePos.rows -= 1;
+          endOfLinePos.cols = this.output.columns - fromEndPrev;
+        }
+      }
+      state = applyPatch(state, {
+        cursor: { col: endOfLinePos.cols, row: endOfLinePos.rows }
+      });
+      return state;
+    },
+
     onKeyPress: async function(str, key) {
       debug({ keyPress: key });
       try {
         let state = await this.processKeyPress(this.state, { str, key });
+        debug({ state });
         if (this.cursorMoved(this.state, state)) {
-          const endOfLinePos = getEndOfLinePos(
-            this.output.columns,
-            state.prompt.text + state.command.text
-          );
-          if (state.cursor.fromEnd) {
-            if (state.cursor.fromEnd < endOfLinePos.cols) {
-              endOfLinePos.cols -= state.cursor.fromEnd;
-            } else {
-              const fromEndPrev = state.cursor.fromEnd - endOfLinePos.cols;
-              endOfLinePos.rows -= 1;
-              endOfLinePos.cols = this.output.columns - fromEndPrev;
-            }
-          }
-          state = applyPatch(state, {
-            cursor: { col: endOfLinePos.cols, row: endOfLinePos.rows }
-          });
+          debug({ state });
+          state = this.updateCursorPos(state);
         }
 
         if (state.exit) {
@@ -137,6 +158,13 @@ function Prompt(options = {}) {
       }
     },
 
+    /**
+     * patch initial state before first render
+     * - does nothing by default, made available for overiding
+     *
+     * @param {Object} state - current state
+     * @returns {Object} state
+     */
     startState(state) {
       return state;
     },
@@ -169,6 +197,12 @@ function Prompt(options = {}) {
       });
     },
 
+    /**
+     * start listening for keyboard input
+     *
+     * @param {Object} state - current state
+     * @returns {Object} state
+     */
     listenToInput(state) {
       state = applyPatch(state, {
         input: {
@@ -185,6 +219,12 @@ function Prompt(options = {}) {
       return state;
     },
 
+    /**
+     * stop listening for keyboard input
+     *
+     * @param {Object} state - current state
+     * @returns {Object} state
+     */
     stopListenToInput(state) {
       state = applyPatch(state, {
         input: { rawMode: false, pause: true, listener: { keypress: null } }
@@ -193,22 +233,48 @@ function Prompt(options = {}) {
       return state;
     },
 
-    commandlineChanged(prevState, state) {
-      const renderedPrompt = `${prevState.prompt.text}${
-        prevState.command.text
-      }`;
-      const newPrompt = `${state.prompt.text}${state.command.text}`;
+    /**
+     * check if the prompt line has been updated between states
+     *
+     * @param {Object} prevState - previous state
+     * @param {Object} state - current state
+     * @returns {Boolean} prompt line changed
+     */
+    promptlineChanged(prevState, state) {
+      const renderedPrompt = this.renderPromptLine(prevState);
+      const newPrompt = this.renderPromptLine(state);
       return renderedPrompt !== newPrompt;
     },
 
+    /**
+     * check if the header has been updated between states
+     *
+     * @param {Object} prevState - previous state
+     * @param {Object} state - current state
+     * @returns {Boolean} header changed
+     */
     headerChanged(prevState, state) {
       return state.header !== prevState.header;
     },
 
+    /**
+     * check if the footer has been updated between states
+     *
+     * @param {Object} prevState - previous state
+     * @param {Object} state - current state
+     * @returns {Boolean} footer changed
+     */
     footerChanged(prevState, state) {
       return state.footer !== prevState.footer;
     },
 
+    /**
+     * check if the commandline needs updating in the terminal
+     *
+     * @param {Object} prevState - previous state
+     * @param {Object} state - current state
+     * @returns {Boolean} commandline needs updating
+     */
     // if header change it may be spanning a different number of lines
     // if footer changed we need to render commandline so it clears the footer..
     // this could be better..
@@ -216,17 +282,77 @@ function Prompt(options = {}) {
       return (
         this.headerChanged(prevState, state) ||
         this.footerChanged(prevState, state) ||
-        this.commandlineChanged(prevState, state)
+        this.promptlineChanged(prevState, state)
       );
     },
 
+    /**
+     * check if the cursor has moved between two states
+     *
+     * @param {Object} prevState - previous state
+     * @param {Object} state - current state
+     * @returns {Boolean} cursor has moved
+     */
     cursorMoved(prevState, state) {
       return (
         prevState.cursor !== state.cursor ||
-        this.commandlineChanged(prevState, state)
+        this.promptlineChanged(prevState, state)
       );
     },
 
+    /**
+     * construct the prompt line from prompt, default command, and current command
+     * - the default command is not included if returnCommand is set or current command exists
+     *
+     * @param {Object} state - current state
+     * @returns {String} prompt line
+     */
+    renderPromptLine(state) {
+      debug({ renderPromptLine: state });
+      const prompt = state.prompt.text;
+      const cmd = this.renderCommand(state);
+      const defaultCmd =
+        state.returnCommand || cmd ? "" : this.renderDefault(state);
+      return `${prompt}${defaultCmd}${cmd}`;
+    },
+
+    /**
+     * returns a string to be displayed as the current command
+     * - if state.secret is true then the command will be masked (eg for password input)
+     *
+     * @param {Object} state - current state
+     * @returns {String} command
+     */
+    renderCommand(state) {
+      const command = state.command.text;
+      if (state.secret) {
+        return "*".repeat(command.length);
+      }
+      return command;
+    },
+
+    /**
+     * returns a string to be displayed as the default command if one is set
+     *
+     * @param {Object} state - current state
+     * @returns {String} default command
+     */
+    renderDefault(state) {
+      if (!state.defaultCommand) {
+        return "";
+      }
+      return chalk.grey(`[${state.defaultCommand}] `);
+    },
+
+    /**
+     * render the current state to the terminal
+     *
+     * @param {Object} param0 -
+     * @param {Object} param0.state - current state
+     * @param {Object} param0.prevState - previous state
+     * @param {Object} param0.output - output stream
+     * @returns {Void} undefined
+     */
     render({ state, prevState, output }) {
       debug({ render: { prevState, state } });
 
@@ -249,7 +375,7 @@ function Prompt(options = {}) {
       }
 
       if (this.commandlineNeedsRender(prevState, state)) {
-        const newPrompt = `${state.prompt.text}${state.command.text}`;
+        const newPrompt = this.renderPromptLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
         if (state.cursor.row > 0) {
@@ -277,7 +403,16 @@ function Prompt(options = {}) {
       cursorTo(output, state.cursor.col);
     },
 
-    updateInput({ prevState, state, input, output }) {
+    /**
+     * render the current state to the terminal
+     *
+     * @param {Object} param0 -
+     * @param {Object} param0.state - current state
+     * @param {Object} param0.prevState - previous state
+     * @param {Object} param0.input - input stream
+     * @returns {Void} undefined
+     */
+    updateInput({ prevState, state, input }) {
       prevState = prevState.input;
       state = state.input;
       if (prevState !== state) {

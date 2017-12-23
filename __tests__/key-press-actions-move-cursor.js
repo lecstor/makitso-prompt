@@ -1,4 +1,4 @@
-const { deleteLeft, deleteRight, moveCursor } = require("../key-press-actions");
+const { moveCursor } = require("../key-press-actions");
 
 describe("key-press-actions", () => {
   describe("moveCursor", () => {

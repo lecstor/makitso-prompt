@@ -16,20 +16,26 @@ function moveCursor(state, places) {
   let { col, fromEnd } = state.cursor;
 
   if (places < 0) {
-    if (col === state.prompt.width) {
+    places = Math.abs(places);
+    const maxPlaces = col - state.prompt.width;
+    if (!maxPlaces) {
       return state;
     }
-    return applyPatch(state, {
-      cursor: { col: col - 1, fromEnd: fromEnd + 1 }
-    });
-  }
-
-  if (places > 0) {
+    if (places > maxPlaces) {
+      places = maxPlaces;
+    }
+    fromEnd += places;
+    col -= places;
+    return applyPatch(state, { cursor: { col, fromEnd } });
+  } else {
     if (!fromEnd) {
       return state;
     }
+    if (places > fromEnd) {
+      places = fromEnd;
+    }
     return applyPatch(state, {
-      cursor: { col: col + 1, fromEnd: fromEnd - 1 }
+      cursor: { col: col + places, fromEnd: fromEnd - places }
     });
   }
 }

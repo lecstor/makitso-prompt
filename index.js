@@ -19,10 +19,15 @@ const keyPressCtrl = require("./key-press-ctrl");
 const debug = require("./debug");
 
 function Prompt(options = {}) {
-  const { prompt = "makitso> ", mode = { command: true } } = options;
+  const {
+    prompt = "makitso> ",
+    mode = { command: true },
+    input = process.stdin,
+    output = process.stdout
+  } = options;
   return {
-    input: process.stdin,
-    output: process.stdout,
+    input,
+    output,
 
     state: {
       default: {
@@ -121,41 +126,53 @@ function Prompt(options = {}) {
       return state;
     },
 
+    keyPressQueue: [],
+    keyPressQueueProcessing: false,
+
     onKeyPress: async function(str, key) {
-      debug({ keyPress: key });
-      try {
-        let state = await this.processKeyPress(this.state, { str, key });
-        debug({ state });
-        if (this.cursorMoved(this.state, state)) {
-          debug({ state });
-          state = this.updateCursorPos(state);
-        }
-
-        if (state.exit) {
-          state = this.exitState(state);
-        } else if (state.returnCommand) {
-          state = this.returnState(state);
-        }
-
-        if (state.exit || state.returnCommand) {
-          state = this.stopListenToInput(state);
-        }
-
-        this.render({ state, prevState: this.state, output: this.output });
-        this.state = state;
-
-        if (state.exit || state.returnCommand) {
-          this.output.write("\n");
-        }
-
-        if (state.returnCommand) {
-          this.resolve(state.command.text.trim());
-        }
-      } catch (error) {
-        this.reject(error);
-        // console.error(error);
-        // process.exit();
+      this.keyPressQueue.push([str, key]);
+      if (this.keyPressQueueProcessing) {
+        return;
       }
+      this.keyPressQueueProcessing = true;
+
+      while (this.keyPressQueue.length) {
+        [str, key] = this.keyPressQueue.shift();
+
+        debug({ keyPress: key });
+        try {
+          let state = await this.processKeyPress(this.state, { str, key });
+          debug({ state });
+          if (this.cursorMoved(this.state, state)) {
+            debug({ state });
+            state = this.updateCursorPos(state);
+          }
+
+          if (state.exit) {
+            state = this.exitState(state);
+          } else if (state.returnCommand) {
+            state = this.returnState(state);
+          }
+
+          if (state.exit || state.returnCommand) {
+            state = this.stopListenToInput(state);
+          }
+
+          this.render({ state, prevState: this.state, output: this.output });
+          this.state = state;
+
+          if (state.exit || state.returnCommand) {
+            this.output.write("\n");
+          }
+
+          if (state.returnCommand) {
+            this.resolve(state.command.text.trim());
+          }
+        } catch (error) {
+          this.reject(error);
+        }
+      }
+      this.keyPressQueueProcessing = false;
     },
 
     /**

@@ -1,77 +1,80 @@
 const { applyPatch } = require("./immutably.js");
 
+const debug = require("./debug");
+
 /**
- * Move the cursor along the command text
+ * Move the cursor left along the command text
  *
  * @param {Object} state - prompt state
  * @param {Number} places - number of places to move the cursor
- *     * negative number for left
- *     * positive number for right
  * @returns {Object} state
  */
-function moveCursor(state, places) {
-  if (!places) {
-    return state;
+function moveCursorLeft(state, places) {
+  debug({ moveCursor: { places } });
+  let { linePos } = state.prompt.cursor;
+  const maxPlaces = state.prompt.command.text.length;
+  let newLinePos = linePos + places;
+  if (newLinePos > maxPlaces) {
+    newLinePos = maxPlaces;
   }
-  let { col, fromEnd } = state.cursor;
+  return applyPatch(state, { prompt: { cursor: { linePos: newLinePos } } });
+}
 
-  if (places < 0) {
-    places = Math.abs(places);
-    const maxPlaces = col - state.prompt.width;
-    if (!maxPlaces) {
-      return state;
-    }
-    if (places > maxPlaces) {
-      places = maxPlaces;
-    }
-    fromEnd += places;
-    col -= places;
-    return applyPatch(state, { cursor: { col, fromEnd } });
-  } else {
-    if (!fromEnd) {
-      return state;
-    }
-    if (places > fromEnd) {
-      places = fromEnd;
-    }
-    return applyPatch(state, {
-      cursor: { col: col + places, fromEnd: fromEnd - places }
-    });
+/**
+ * Move the cursor right along the command text
+ *
+ * @param {Object} state - prompt state
+ * @param {Number} places - number of places to move the cursor
+ * @returns {Object} state
+ */
+function moveCursorRight(state, places) {
+  let { linePos } = state.prompt.cursor;
+  if (places > linePos) {
+    places = linePos;
   }
+  return applyPatch(state, {
+    prompt: { cursor: { linePos: linePos - places } }
+  });
 }
 
 function deleteLeft(state) {
-  const { fromEnd } = state.cursor;
-  if (!fromEnd) {
+  const { linePos } = state.prompt.cursor;
+  if (!linePos) {
     return applyPatch(state, {
-      command: {
-        text: state.command.text.slice(0, -1)
+      prompt: {
+        command: {
+          text: state.prompt.command.text.slice(0, -1)
+        }
       }
     });
   } else {
-    const { text } = state.command;
+    const { text } = state.prompt.command;
     return applyPatch(state, {
-      command: {
-        text: text.slice(0, -fromEnd - 1) + text.slice(-fromEnd)
+      prompt: {
+        command: {
+          text: text.slice(0, -linePos - 1) + text.slice(-linePos)
+        }
       }
     });
   }
 }
 
 function deleteRight(state) {
-  const { fromEnd } = state.cursor;
-  if (!fromEnd) {
+  const { linePos } = state.prompt.cursor;
+  if (!linePos) {
     return state;
   }
-  const command = state.command.text;
+  const command = state.prompt.command.text;
   return applyPatch(state, {
-    command: {
-      text: command.slice(0, -fromEnd + 1) + command.slice(-fromEnd + 2)
-    },
-    cursor: {
-      fromEnd: state.cursor.fromEnd - 1
+    prompt: {
+      command: {
+        text: command.slice(0, -linePos) + command.slice(-linePos + 1),
+        cursor: {
+          linePos: state.prompt.cursor.linePos - 1
+        }
+      }
     }
   });
 }
 
-module.exports = { deleteLeft, deleteRight, moveCursor };
+module.exports = { deleteLeft, deleteRight, moveCursorLeft, moveCursorRight };

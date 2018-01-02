@@ -177,4 +177,4 @@ function getDisplayPos(str, col) {
   return { cols: cols, rows: rows };
 }
 
-module.exports = { getDisplayPos, getStringWidth };
+module.exports = { getDisplayPos, getStringWidth, stripVTControlCharacters };

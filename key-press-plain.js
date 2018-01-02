@@ -1,5 +1,10 @@
 const { applyPatch } = require("./immutably.js");
-const { deleteLeft, deleteRight, moveCursor } = require("./key-press-actions");
+const {
+  deleteLeft,
+  deleteRight,
+  moveCursorLeft,
+  moveCursorRight
+} = require("./key-press-actions");
 
 const keyPressPlain = {
   keyPress(state, press) {
@@ -14,15 +19,17 @@ const keyPressPlain = {
   delete: state => deleteRight(state),
   enter: state => state,
   escape: state => state,
-  left: state => moveCursor(state, -1),
+  left: state => moveCursorLeft(state, 1),
   return: state => {
-    let { text } = state.command;
-    if (text === "" && state.defaultCommand) {
-      state = applyPatch(state, { command: { text: state.defaultCommand } });
+    let { text } = state.prompt.command;
+    if (text === "" && state.default.command) {
+      state = applyPatch(state, {
+        prompt: { command: { text: state.default.command } }
+      });
     }
     return applyPatch(state, { returnCommand: true });
   },
-  right: state => moveCursor(state, +1),
+  right: state => moveCursorRight(state, +1),
   tab: state => state,
 
   default: (state, press) => {
@@ -30,18 +37,20 @@ const keyPressPlain = {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
-      let { text } = state.command;
-      let { fromEnd } = state.cursor;
-      if (fromEnd) {
-        const start = text.slice(0, -fromEnd);
-        const end = text.slice(-fromEnd);
+      let { text } = state.prompt.command;
+      let { linePos } = state.prompt.cursor;
+      if (linePos) {
+        const start = text.slice(0, -linePos);
+        const end = text.slice(-linePos);
         text = `${start}${press.str}${end}`;
       } else {
         text = `${text}${press.str}`;
       }
       state = applyPatch(state, {
-        command: { text },
-        cursor: { col: state.cursor.col + 1 }
+        prompt: {
+          command: { text },
+          cursor: { cols: state.prompt.cursor.cols + 1 }
+        }
       });
     }
     return state;

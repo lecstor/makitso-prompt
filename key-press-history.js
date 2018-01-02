@@ -59,7 +59,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   pushHistory(state) {
-    const command = state.command.text;
+    const command = state.prompt.command.text;
     const history = this.getHistory(state);
     if (!command || command === history[0]) {
       return applyPatch(state, {
@@ -78,7 +78,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   updateHistory(state) {
-    const command = state.command.text;
+    const command = state.prompt.command.text;
     const history = this.getHistory(state);
     return applyPatch(state, {
       history: { commands: [command, ...history] }
@@ -117,7 +117,7 @@ const keyPressAutoComplete = {
         return state;
       }
       return applyPatch(state, {
-        command: { text: state.history.commands[index + 1] },
+        prompt: { command: { text: state.history.commands[index + 1] } },
         history: { index: index + 1 }
       });
     },
@@ -133,7 +133,7 @@ const keyPressAutoComplete = {
         return this.escape(state);
       }
       return applyPatch(state, {
-        command: { text: state.history.commands[index - 1] },
+        prompt: { command: { text: state.history.commands[index - 1] } },
         history: { index: index - 1 }
       });
     },
@@ -145,10 +145,8 @@ const keyPressAutoComplete = {
      */
     return(state) {
       state = setMode(state, state.default.mode);
-      return applyPatch(state, {
-        prompt: state.default.prompt,
-        history: { index: 0 }
-      });
+      state = setPrompt(state, state.default.prompt);
+      return applyPatch(state, { history: { index: 0 } });
     },
 
     /**
@@ -159,9 +157,9 @@ const keyPressAutoComplete = {
      */
     escape(state) {
       state = setMode(state, state.default.mode);
+      state = setPrompt(state, state.default.prompt.text);
       return applyPatch(state, {
-        prompt: state.default.prompt,
-        command: { text: state.history.commands[0] },
+        prompt: { command: { text: state.history.commands[0] } },
         history: { index: 0 }
       });
     }

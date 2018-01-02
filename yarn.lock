@@ -2049,6 +2049,10 @@ minimist@~0.0.1:
   dependencies:
     minimist "0.0.8"
 
+mock-stdin@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/mock-stdin/-/mock-stdin-0.3.1.tgz#c657d9642d90786435c64ca5e99bbd4d09bd7dd3"
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -2064,6 +2068,14 @@ nan@^2.3.0:
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
+
+node-ansiparser@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/node-ansiparser/-/node-ansiparser-2.2.0.tgz#b724d3e5e3fa5a854256bb63aceb091e720793ad"
+
+node-ansiterminal@^0.2.1-beta:
+  version "0.2.1-beta"
+  resolved "https://registry.yarnpkg.com/node-ansiterminal/-/node-ansiterminal-0.2.1-beta.tgz#f5b684f7f1375f20cc703d95fb33e27cf46ef290"
 
 node-int64@^0.4.0:
   version "0.4.0"
@@ -2841,12 +2853,6 @@ tar@^2.2.1:
     block-stream "*"
     fstream "^1.0.2"
     inherits "2"
-
-term-size@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/term-size/-/term-size-1.2.0.tgz#458b83887f288fc56d6fffbfad262e26638efa69"
-  dependencies:
-    execa "^0.7.0"
 
 test-exclude@^4.1.1:
   version "4.1.1"

@@ -35,15 +35,30 @@ function Prompt(options = {}) {
         mode
       },
       mode,
-      command: { text: "" },
-      prompt: { text: "" },
-      cursor: { col: 0, row: 0, fromEnd: 0 },
+      prompt: {
+        text: "",
+        width: 0,
+        command: {
+          text: "",
+          width: ""
+        },
+        eol: { cols: 0, rows: 0 },
+        cursor: {
+          cols: 0,
+          rows: 0,
+          linePos: 0 // position of the cursor from the end of the prompt line
+        }
+      },
       input: {
         pause: true,
         rawMode: false,
         listener: {
           keypress: null
         }
+      },
+      output: {
+        width: output.columns,
+        height: output.rows
       }
     },
 
@@ -80,12 +95,21 @@ function Prompt(options = {}) {
       state = applyPatch(state, {
         header,
         footer,
-        prompt,
+        prompt: {
+          ...prompt,
+          command: { text: "", width: 0 }
+        },
         secret,
-        defaultCommand,
-        returnCommand: false,
-        command: { text: "" },
-        cursor: { col: null, row: 0, fromEnd: 0 }
+        default: { command: defaultCommand },
+        returnCommand: false
+        // command: { text: "" },
+        // cursor: { col: null, row: 0, fromEnd: 0 }
+      });
+      state = applyPatch(state, {
+        prompt: {
+          cursor: { linePos: 0 },
+          eol: getEndOfLinePos(state.output.width, this.renderPromptLine(state))
+        }
       });
       state = this.startState(state);
       state = this.updateCursorPos(state);
@@ -107,24 +131,52 @@ function Prompt(options = {}) {
     },
 
     updateCursorPos(state) {
-      const endOfLinePos = getEndOfLinePos(
-        this.output.columns,
-        this.renderPromptLine(state)
-      );
-      if (state.cursor.fromEnd) {
-        if (state.cursor.fromEnd < endOfLinePos.cols) {
-          endOfLinePos.cols -= state.cursor.fromEnd;
-        } else {
-          const fromEndPrev = state.cursor.fromEnd - endOfLinePos.cols;
-          endOfLinePos.rows -= 1;
-          endOfLinePos.cols = this.output.columns - fromEndPrev;
-        }
+      const { linePos } = state.prompt.cursor;
+      if (!linePos) {
+        return applyPatch(state, { prompt: { cursor: state.prompt.eol } });
       }
-      state = applyPatch(state, {
-        cursor: { col: endOfLinePos.cols, row: endOfLinePos.rows }
-      });
-      return state;
+      const cursor = { ...state.prompt.eol };
+      if (linePos > state.prompt.eol.cols) {
+        // prompt line is wrapped and cursor is not on last line
+        let adjustedLinePos = linePos - cursor.cols;
+        cursor.rows--;
+        while (adjustedLinePos > state.output.width) {
+          adjustedLinePos -= state.output.width;
+          cursor.rows--;
+        }
+        cursor.cols = state.output.width - adjustedLinePos;
+      } else {
+        cursor.cols -= linePos;
+      }
+      return applyPatch(state, { prompt: { cursor } });
     },
+
+    // updateCursorPos(state) {
+    //   const endOfLinePos = getEndOfLinePos(
+    //     state.output.width,
+    //     this.renderPromptLine(state)
+    //   );
+    //   if (state.cursor.fromEnd) {
+    //     debug({
+    //       updateCursorPos: {
+    //         fromEnd: state.cursor.fromEnd,
+    //         cols: endOfLinePos.cols
+    //       }
+    //     });
+    //     if (state.cursor.fromEnd < endOfLinePos.cols) {
+    //       endOfLinePos.cols -= state.cursor.fromEnd;
+    //     } else {
+    //       // wrapped line
+    //       const fromEndPrev = state.cursor.fromEnd - endOfLinePos.cols;
+    //       endOfLinePos.rows -= 1;
+    //       endOfLinePos.cols = this.output.columns - fromEndPrev;
+    //     }
+    //   }
+    //   state = applyPatch(state, {
+    //     cursor: { col: endOfLinePos.cols, row: endOfLinePos.rows }
+    //   });
+    //   return state;
+    // },
 
     keyPressQueue: [],
     keyPressQueueProcessing: false,
@@ -143,7 +195,18 @@ function Prompt(options = {}) {
         try {
           let state = await this.processKeyPress(this.state, { str, key });
           debug({ state });
-          if (this.cursorMoved(this.state, state)) {
+
+          if (this.promptlineChanged(this.state, state)) {
+            state = applyPatch(state, {
+              prompt: {
+                eol: getEndOfLinePos(
+                  state.output.width,
+                  this.renderPromptLine(state)
+                )
+              }
+            });
+            state = this.updateCursorPos(state);
+          } else if (this.cursorMoved(this.state, state)) {
             debug({ state });
             state = this.updateCursorPos(state);
           }
@@ -166,7 +229,7 @@ function Prompt(options = {}) {
           }
 
           if (state.returnCommand) {
-            this.resolve(state.command.text.trim());
+            this.resolve(state.prompt.command.text.trim());
           }
         } catch (error) {
           this.reject(error);
@@ -196,8 +259,7 @@ function Prompt(options = {}) {
       return applyPatch(state, {
         header: "",
         footer: "",
-        prompt: { text: "" },
-        command: { text: "" }
+        prompt: { text: "", command: { text: "" } }
       });
     },
 
@@ -312,7 +374,7 @@ function Prompt(options = {}) {
      */
     cursorMoved(prevState, state) {
       return (
-        prevState.cursor !== state.cursor ||
+        prevState.prompt.cursor !== state.prompt.cursor ||
         this.promptlineChanged(prevState, state)
       );
     },
@@ -341,7 +403,7 @@ function Prompt(options = {}) {
      * @returns {String} command
      */
     renderCommand(state) {
-      const command = state.command.text;
+      const command = state.prompt.command.text;
       if (state.secret) {
         return "*".repeat(command.length);
       }
@@ -355,10 +417,10 @@ function Prompt(options = {}) {
      * @returns {String} default command
      */
     renderDefault(state) {
-      if (!state.defaultCommand) {
+      if (!state.default.command) {
         return "";
       }
-      return chalk.grey(`[${state.defaultCommand}] `);
+      return chalk.grey(`[${state.default.command}] `);
     },
 
     /**
@@ -395,29 +457,30 @@ function Prompt(options = {}) {
         const newPrompt = this.renderPromptLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
-        if (state.cursor.row > 0) {
+        if (state.prompt.cursor.rows > 0) {
           // if the last char on the line is in the last column in the terminal
           // then we need to make room for the next line
-          if (state.cursor.col === 0) {
+          if (state.prompt.cursor.cols === 0) {
             output.write("\n");
           }
-          moveCursor(output, 0, -state.cursor.row);
+          moveCursor(output, 0, -state.prompt.cursor.rows);
         }
         cursorTo(output, 0);
         clearScreenDown(output);
         output.write(newPrompt);
 
-        if (state.cursor.col === 0) {
+        if (state.prompt.cursor.cols === 0) {
           output.write(" "); // Force terminal to allocate a new line
         }
       }
+
       if (state.footer) {
         output.write("\n" + state.footer);
-        const endOfLinePos = getEndOfLinePos(this.output.columns, state.footer);
+        const endOfLinePos = getEndOfLinePos(state.output.width, state.footer);
         moveCursor(output, 0, -(endOfLinePos.rows + 1));
       }
 
-      cursorTo(output, state.cursor.col);
+      cursorTo(output, state.prompt.cursor.cols);
     },
 
     /**

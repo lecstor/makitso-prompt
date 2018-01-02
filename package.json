@@ -19,6 +19,9 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^21.2.1",
+    "mock-stdin": "^0.3.1",
+    "node-ansiparser": "^2.2.0",
+    "node-ansiterminal": "^0.2.1-beta",
     "prettier": "^1.7.4",
     "prettier-eslint": "^8.3.1"
   },

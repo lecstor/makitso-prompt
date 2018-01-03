@@ -5,6 +5,10 @@
   "main": "index.js",
   "author": "jason@lecstor.com",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lecstor/makitso-prompt.git"
+  },
   "dependencies": {
     "chalk": "^2.3.0",
     "prettyjson": "^1.2.1"

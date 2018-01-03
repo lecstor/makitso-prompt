@@ -1,6 +1,6 @@
 {
   "name": "makitso-prompt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "a terminal prompt",
   "main": "index.js",
   "author": "jason@lecstor.com",

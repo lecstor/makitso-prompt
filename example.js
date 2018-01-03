@@ -13,7 +13,7 @@ const prompt = Prompt({ prompt: chalk`{blue default> }` });
 debug({ promptState: prompt.state });
 
 Object.assign(prompt, {
-  keyPressers: [...prompt.keyPressers, complete, history]
+  keyPressers: [...prompt.keyPressers, history, complete]
 });
 
 const options = {};

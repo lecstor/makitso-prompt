@@ -35,7 +35,7 @@ function newPrompt() {
     )
     .then(command => console.log(`received: "${command}"`))
     .then(() => {
-      Object.assign(prompt, { keyPressers: [...defaultKP, complete, history] });
+      Object.assign(prompt, { keyPressers: [...defaultKP, history, complete] });
       return prompt.start({
         header: chalk`Can update footer/prompt/header and do autocomplete {grey (try abcd [tab])}`,
         prompt: "thePrompt> "

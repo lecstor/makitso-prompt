@@ -148,7 +148,7 @@ const keyPressAutoComplete = {
      */
     return(state) {
       state = setMode(state, state.default.mode);
-      state = setPrompt(state, state.default.prompt);
+      state = setPrompt(state, state.default.prompt.text);
       return applyPatch(state, { history: { index: 0 } });
     },
 

@@ -9,7 +9,7 @@ function keyPressAutoComplete(choices) {
 
         const matches = _filter(choices, choice => choice.startsWith(command));
 
-        if (press.key.name === "tab" && matches.length === 1) {
+        if (press.key && press.key.name === "tab" && matches.length === 1) {
           state = applyPatch(state, {
             prompt: {
               command: { text: matches[0] + " " },

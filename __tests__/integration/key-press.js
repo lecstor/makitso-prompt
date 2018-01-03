@@ -317,6 +317,7 @@ describe("key-press", () => {
       Object.assign(prompt, { keyPressers: [...prompt.keyPressers, history] });
 
       prompt.start().then(() => prompt.start());
+      await getResult(prompt, output, 2);
       input.send(`hello${ret}${upArrow}`);
       const expected = "test> hello\nhistory> hello";
       const result = await getResult(prompt, output, 2);
@@ -354,7 +355,7 @@ describe("key-press", () => {
       expect(result).toEqual(expected);
     });
 
-    test("ignore ctrl chars (except c) when not in command mode", done => {
+    test("ignore ctrl chars (except c) when not in command mode", async () => {
       const output = newOutput();
       const prompt = Prompt({ input, output, prompt: promptText });
       Object.assign(prompt, { keyPressers: [...prompt.keyPressers, history] });
@@ -365,9 +366,9 @@ describe("key-press", () => {
         const expected = "test> hello\nhistory> hello";
         return getResult(prompt, output).then(result => {
           expect(result).toEqual(expected);
-          done();
         });
       });
+      await getResult(prompt, output, 2);
       input.send(`hello${ret}${upArrow}${ctrlB}`);
     });
   });

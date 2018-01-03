@@ -5,6 +5,9 @@ const { setPrompt, setMode } = require("./state");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
+    if (press.key.name === "init") {
+      return state;
+    }
     if (state.mode.history) {
       return this.historyKeyPress(state, press);
     } else if (press.key.name === "up") {

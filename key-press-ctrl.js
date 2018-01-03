@@ -3,6 +3,9 @@ const { deleteRight, moveCursorLeft } = require("./key-press-actions");
 
 module.exports = {
   keyPress(state, press) {
+    if (press.key.name === "init") {
+      return state;
+    }
     if (!press.key.ctrl) {
       return state;
     }

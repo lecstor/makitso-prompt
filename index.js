@@ -75,13 +75,14 @@ function Prompt(options = {}) {
      * @param {Boolean} [options.secret] - when true the commandline input will be masked
      * @returns {Promise} resolves to the entered command
      */
-    start(options = {}) {
+    start: async function(options = {}) {
       const {
         mode = { command: true },
         header = "",
         footer = "",
         secret = false,
-        default: defaultCommand = ""
+        default: defaultCommand = "",
+        command = ""
       } = options;
 
       emitKeypressEvents(this.input);
@@ -97,13 +98,11 @@ function Prompt(options = {}) {
         footer,
         prompt: {
           ...prompt,
-          command: { text: "", width: 0 }
+          command: { text: command, width: command.length }
         },
         secret,
         default: { command: defaultCommand },
         returnCommand: false
-        // command: { text: "" },
-        // cursor: { col: null, row: 0, fromEnd: 0 }
       });
       state = applyPatch(state, {
         prompt: {
@@ -117,10 +116,14 @@ function Prompt(options = {}) {
       this.render({ state, prevState: this.state, output: this.output });
       this.state = state;
 
-      return new Promise((resolve, reject) => {
+      const promptPromise = new Promise((resolve, reject) => {
         this.resolve = resolve;
         this.reject = reject;
       });
+
+      await this.onKeyPress("init", { name: "init" });
+
+      return promptPromise;
     },
 
     processKeyPress: async function(state, press) {

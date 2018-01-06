@@ -390,7 +390,7 @@ function Prompt(options = {}) {
      * @returns {String} prompt line
      */
     renderPromptLine(state) {
-      debug({ renderPromptLine: state });
+      // debug({ renderPromptLine: state });
       const prompt = state.prompt.text;
       const cmd = this.renderCommand(state);
       const defaultCmd =
@@ -436,20 +436,18 @@ function Prompt(options = {}) {
      * @returns {Void} undefined
      */
     render({ state, prevState, output }) {
-      debug({ render: { prevState, state } });
+      // debug({ render: { prevState, state } });
 
       if (state === prevState) {
         return;
       }
 
       if (this.headerChanged(prevState, state)) {
+        let rows = 0;
         if (prevState.header) {
-          const { rows } = getEndOfLinePos(
-            this.output.columns,
-            prevState.header
-          );
-          clearLinesAbove(this.output, rows + 1);
+          ({ rows } = getEndOfLinePos(this.output.columns, prevState.header));
         }
+        clearLinesAbove(output, rows + 1);
         output.write(`${state.header}`);
         if (state.header.length) {
           output.write("\n");

@@ -28,14 +28,22 @@ function waitForKeyPressProcessing(prompt) {
   });
 }
 
-async function getResult(prompt, output, rows) {
-  await waitForKeyPressProcessing(prompt);
+function parseOutput(output, rows) {
   const terminal = new AnsiTerminal(80, (rows = 10), 0);
   const parser = new AnsiParser(terminal);
-  parser.parse(output.data);
-  const result = terminal.toString().replace(/\n+$/, "");
-  debug({ result, outputData: output.data });
+  parser.parse(output);
+  return terminal.toString().replace(/\n+$/, "");
+}
+
+async function getResult(prompt, output, rows) {
+  await waitForKeyPressProcessing(prompt);
+  const result = parseOutput(output.data, rows);
   return result;
 }
 
-module.exports = { newOutput, waitForKeyPressProcessing, getResult };
+module.exports = {
+  newOutput,
+  waitForKeyPressProcessing,
+  parseOutput,
+  getResult
+};

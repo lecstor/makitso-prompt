@@ -10,6 +10,7 @@
     "url": "https://github.com/lecstor/makitso-prompt.git"
   },
   "dependencies": {
+    "ansi-escapes": "^3.0.0",
     "chalk": "^2.3.0",
     "prettyjson": "^1.2.1"
   },

@@ -276,7 +276,7 @@ describe("key-press", () => {
 
       prompt.start();
       input.send(upArrow);
-      const expected = "test> \n      You have no history to browse";
+      const expected = "test> \nYou have no history to browse";
       const result = await getResult(prompt, output, 2);
       expect(result).toEqual(expected);
     });

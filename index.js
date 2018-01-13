@@ -1,6 +1,5 @@
 const _forEach = require("lodash/forEach");
 const chalk = require("chalk");
-const ansiEscapes = require("ansi-escapes");
 
 const {
   emitKeypressEvents,
@@ -19,22 +18,6 @@ const keyPressCtrl = require("./key-press-ctrl");
 
 const debug = require("./debug");
 
-/**
- * ensure there is a line below the current line
- * it seems that when you run the script the cursor starts on the same
- * line as the bash command if it is on the last line of the terminal,
- * but on the next line if it is not.
- * Addin a one-line scrollup, once, only on startup, adds some consistency
- */
-let SCROLLEDUP = false;
-function scrollUpOnce(output) {
-  if (SCROLLEDUP) {
-    return;
-  }
-  SCROLLEDUP = true;
-  output.write(ansiEscapes.scrollUp);
-}
-
 function Prompt(options = {}) {
   const {
     prompt = "makitso> ",
@@ -42,8 +25,6 @@ function Prompt(options = {}) {
     input = process.stdin,
     output = process.stdout
   } = options;
-
-  scrollUpOnce(output);
 
   return {
     input,
@@ -79,7 +60,9 @@ function Prompt(options = {}) {
       output: {
         width: output.columns,
         height: output.rows
-      }
+      },
+      header: "",
+      footer: ""
     },
 
     keyPressers: [keyPressPlain, keyPressCtrl],
@@ -249,6 +232,7 @@ function Prompt(options = {}) {
           this.state = state;
 
           if (state.exit || state.returnCommand) {
+            debug("write newline");
             this.output.write("\n");
           }
 
@@ -464,14 +448,21 @@ function Prompt(options = {}) {
       }
 
       if (this.headerChanged(prevState, state)) {
-        debug("header changed");
+        // debug("header changed");
         let rows = 0;
         if (prevState.header) {
           ({ rows } = getEndOfLinePos(this.output.columns, prevState.header));
+          debug(`clearLinesAbove ${rows + 1}`);
+          clearLinesAbove(output, rows + 1);
         }
-        clearLinesAbove(output, rows + 1);
+        cursorTo(output, 0);
+        debug(`clearScreenDown`);
+        clearScreenDown(output);
+
+        debug("write header");
         output.write(`${state.header}`);
         if (state.header.length) {
+          debug("write newline");
           output.write("\r\n");
         }
       }
@@ -485,22 +476,29 @@ function Prompt(options = {}) {
           // if the last char on the line is in the last column in the terminal
           // then we need to make room for the next line
           if (state.prompt.cursor.cols === 0) {
+            debug("write newline");
             output.write("\r\n");
           }
+          debug(`moveCursor 0, ${-state.prompt.cursor.rows}`);
           moveCursor(output, 0, -state.prompt.cursor.rows);
         }
         cursorTo(output, 0);
+        debug("clear screen down");
         clearScreenDown(output);
+        debug("write prompt");
         output.write(newPrompt);
 
         if (state.prompt.cursor.cols === 0) {
+          debug("write space");
           output.write(" "); // Force terminal to allocate a new line
         }
       }
 
       if (state.footer) {
+        debug("write newline + footer");
         output.write("\r\n" + state.footer);
         const endOfLinePos = getEndOfLinePos(state.output.width, state.footer);
+        debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
         moveCursor(output, 0, -(endOfLinePos.rows + 1));
       }
 

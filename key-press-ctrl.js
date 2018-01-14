@@ -1,4 +1,4 @@
-const { applyPatch } = require("./immutably.js");
+const { applyPatch } = require("./immutably");
 const { deleteRight, moveCursorLeft } = require("./key-press-actions");
 
 module.exports = {

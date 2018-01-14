@@ -11,7 +11,12 @@ const {
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
 const { applyPatch } = require("./immutably");
-const { newPrompt, newMode } = require("./state-utils");
+const {
+  updateCursorPos,
+  initialState,
+  newPrompt,
+  newMode
+} = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -29,42 +34,7 @@ function Prompt(options = {}) {
   return {
     input,
     output,
-
-    state: {
-      default: {
-        prompt: newPrompt({}, { prompt }),
-        mode
-      },
-      mode,
-      prompt: {
-        text: "",
-        width: 0,
-        command: {
-          text: "",
-          width: ""
-        },
-        eol: { cols: 0, rows: 0 },
-        cursor: {
-          cols: 0,
-          rows: 0,
-          linePos: 0 // position of the cursor from the end of the prompt line
-        }
-      },
-      input: {
-        pause: true,
-        rawMode: false,
-        listener: {
-          keypress: null
-        }
-      },
-      output: {
-        width: output.columns,
-        height: output.rows
-      },
-      header: "",
-      footer: ""
-    },
-
+    state: initialState({ prompt, mode, output }),
     keyPressers: [keyPressPlain, keyPressCtrl],
 
     /**
@@ -91,18 +61,12 @@ function Prompt(options = {}) {
       emitKeypressEvents(this.input);
 
       let state = this.state;
-      let prompt = options.prompt
-        ? newPrompt(state, { prompt: options.prompt })
-        : state.default.prompt;
       state = this.listenToInput(state);
       state = applyPatch(state, {
         mode: newMode(mode),
         header,
         footer,
-        prompt: {
-          ...prompt,
-          command: { text: command, width: command.length }
-        },
+        prompt: newPrompt(state, { prompt: options.prompt, command }),
         secret,
         default: { command: defaultCommand },
         returnCommand: false
@@ -114,7 +78,7 @@ function Prompt(options = {}) {
         }
       });
       state = this.startState(state);
-      state = this.updateCursorPos(state);
+      state = updateCursorPos(state);
 
       this.render({ state, prevState: this.state, output: this.output });
       this.state = state;
@@ -135,54 +99,6 @@ function Prompt(options = {}) {
       }
       return state;
     },
-
-    updateCursorPos(state) {
-      const { linePos } = state.prompt.cursor;
-      if (!linePos) {
-        return applyPatch(state, { prompt: { cursor: state.prompt.eol } });
-      }
-      const cursor = { ...state.prompt.eol };
-      if (linePos > state.prompt.eol.cols) {
-        // prompt line is wrapped and cursor is not on last line
-        let adjustedLinePos = linePos - cursor.cols;
-        cursor.rows--;
-        while (adjustedLinePos > state.output.width) {
-          adjustedLinePos -= state.output.width;
-          cursor.rows--;
-        }
-        cursor.cols = state.output.width - adjustedLinePos;
-      } else {
-        cursor.cols -= linePos;
-      }
-      return applyPatch(state, { prompt: { cursor } });
-    },
-
-    // updateCursorPos(state) {
-    //   const endOfLinePos = getEndOfLinePos(
-    //     state.output.width,
-    //     this.renderPromptLine(state)
-    //   );
-    //   if (state.cursor.fromEnd) {
-    //     debug({
-    //       updateCursorPos: {
-    //         fromEnd: state.cursor.fromEnd,
-    //         cols: endOfLinePos.cols
-    //       }
-    //     });
-    //     if (state.cursor.fromEnd < endOfLinePos.cols) {
-    //       endOfLinePos.cols -= state.cursor.fromEnd;
-    //     } else {
-    //       // wrapped line
-    //       const fromEndPrev = state.cursor.fromEnd - endOfLinePos.cols;
-    //       endOfLinePos.rows -= 1;
-    //       endOfLinePos.cols = this.output.columns - fromEndPrev;
-    //     }
-    //   }
-    //   state = applyPatch(state, {
-    //     cursor: { col: endOfLinePos.cols, row: endOfLinePos.rows }
-    //   });
-    //   return state;
-    // },
 
     keyPressQueue: [],
     keyPressQueueProcessing: false,
@@ -212,10 +128,10 @@ function Prompt(options = {}) {
                 )
               }
             });
-            state = this.updateCursorPos(state);
+            state = updateCursorPos(state);
           } else if (this.cursorMoved(this.state, state)) {
             debug({ state });
-            state = this.updateCursorPos(state);
+            state = updateCursorPos(state);
           }
 
           if (state.exit) {

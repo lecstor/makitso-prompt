@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 
 const { applyPatch } = require("./immutably");
-const { newPrompt, newMode } = require("./state-utils");
+const { newPrompt, newMode, newCommand } = require("./state-utils");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
@@ -138,9 +138,9 @@ const keyPressAutoComplete = {
         return this.escape(state);
       }
       return applyPatch(state, {
-        prompt: newPrompt(state, {
-          command: state.history.commands[index - 1]
-        }),
+        prompt: {
+          command: newCommand(state.history.commands[index - 1])
+        },
         history: { index: index - 1 }
       });
     },

@@ -20,7 +20,7 @@ describe("render", () => {
       header: "Enter a connectionName\r\nsome short text"
     });
     const output = newOutput();
-    output.write("Makitso> vpn disconnect foo bar baz\n");
+    output.write("Makitso> vpn disconnect foo bar baz");
     prompt.render({ state, prevState, output });
     const expected = `Enter a connectionName
 some short text

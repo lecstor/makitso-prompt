@@ -10,8 +10,8 @@ const {
 
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
-const { applyPatch } = require("./immutably.js");
-const { setPrompt, setMode } = require("./state");
+const { applyPatch } = require("./immutably");
+const { newPrompt, newMode } = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -32,7 +32,7 @@ function Prompt(options = {}) {
 
     state: {
       default: {
-        prompt: setPrompt({}, prompt).prompt,
+        prompt: newPrompt(prompt),
         mode
       },
       mode,
@@ -91,12 +91,13 @@ function Prompt(options = {}) {
       emitKeypressEvents(this.input);
 
       let state = this.state;
-      state = setMode(state, mode);
+      // state = setMode(state, mode);
       let prompt = options.prompt
-        ? setPrompt({}, options.prompt).prompt
+        ? newPrompt(options.prompt)
         : state.default.prompt;
       state = this.listenToInput(state);
       state = applyPatch(state, {
+        mode: newMode(mode),
         header,
         footer,
         prompt: {

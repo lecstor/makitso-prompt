@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 
 const { applyPatch } = require("./immutably");
-const { setPrompt, setMode } = require("./state");
+const { newPrompt, newMode } = require("./state-utils");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
@@ -32,9 +32,11 @@ const keyPressAutoComplete = {
    */
   activateHistory(state) {
     if (state.history && state.history.commands.length > 1) {
-      state = setMode(state, { history: true });
-      state = applyPatch(state, { history: { index: 0 } });
-      state = setPrompt(state, this.prompt);
+      state = applyPatch(state, {
+        mode: newMode(state, { history: true }),
+        prompt: newPrompt(this.prompt),
+        history: { index: 0 }
+      });
       return this.pressKey.up(state);
     } else {
       return applyPatch(state, this.noHistory);
@@ -147,9 +149,11 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     return(state) {
-      state = setMode(state, state.default.mode);
-      state = setPrompt(state, state.default.prompt.text);
-      return applyPatch(state, { history: { index: 0 } });
+      return applyPatch(state, {
+        mode: newMode(state, state.default.mode),
+        prompt: newPrompt(state.default.prompt.text),
+        history: { index: 0 }
+      });
     },
 
     /**
@@ -159,10 +163,9 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     escape(state) {
-      state = setMode(state, state.default.mode);
-      state = setPrompt(state, state.default.prompt.text);
       return applyPatch(state, {
-        prompt: { command: { text: state.history.commands[0] } },
+        mode: newMode(state, state.default.mode),
+        prompt: newPrompt(state.default.prompt.text, state.history.commands[0]),
         history: { index: 0 }
       });
     }

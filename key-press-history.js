@@ -34,7 +34,7 @@ const keyPressAutoComplete = {
     if (state.history && state.history.commands.length > 1) {
       state = applyPatch(state, {
         mode: newMode(state, { history: true }),
-        prompt: newPrompt(this.prompt),
+        prompt: newPrompt(state, { prompt: this.prompt }),
         history: { index: 0 }
       });
       return this.pressKey.up(state);
@@ -138,7 +138,9 @@ const keyPressAutoComplete = {
         return this.escape(state);
       }
       return applyPatch(state, {
-        prompt: { command: { text: state.history.commands[index - 1] } },
+        prompt: newPrompt(state, {
+          command: state.history.commands[index - 1]
+        }),
         history: { index: index - 1 }
       });
     },
@@ -151,7 +153,7 @@ const keyPressAutoComplete = {
     return(state) {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
-        prompt: newPrompt(state.default.prompt.text),
+        prompt: newPrompt(state, { prompt: state.default.prompt.text }),
         history: { index: 0 }
       });
     },
@@ -165,7 +167,10 @@ const keyPressAutoComplete = {
     escape(state) {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
-        prompt: newPrompt(state.default.prompt.text, state.history.commands[0]),
+        prompt: newPrompt(state, {
+          prompt: state.default.prompt.text,
+          command: state.history.commands[0]
+        }),
         history: { index: 0 }
       });
     }

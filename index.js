@@ -32,7 +32,7 @@ function Prompt(options = {}) {
 
     state: {
       default: {
-        prompt: newPrompt(prompt),
+        prompt: newPrompt({}, { prompt }),
         mode
       },
       mode,
@@ -91,9 +91,8 @@ function Prompt(options = {}) {
       emitKeypressEvents(this.input);
 
       let state = this.state;
-      // state = setMode(state, mode);
       let prompt = options.prompt
-        ? newPrompt(options.prompt)
+        ? newPrompt(state, { prompt: options.prompt })
         : state.default.prompt;
       state = this.listenToInput(state);
       state = applyPatch(state, {
@@ -330,8 +329,8 @@ function Prompt(options = {}) {
      */
     promptlineChanged(prevState, state) {
       const renderedPrompt = this.renderPromptLine(prevState);
-      const newPrompt = this.renderPromptLine(state);
-      return renderedPrompt !== newPrompt;
+      const newRenderedPrompt = this.renderPromptLine(state);
+      return renderedPrompt !== newRenderedPrompt;
     },
 
     /**
@@ -470,7 +469,7 @@ function Prompt(options = {}) {
 
       if (this.commandlineNeedsRender(prevState, state)) {
         debug("commandlineNeedsRender");
-        const newPrompt = this.renderPromptLine(state);
+        const renderedPrompt = this.renderPromptLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
         if (state.prompt.cursor.rows > 0) {
@@ -487,7 +486,7 @@ function Prompt(options = {}) {
         debug("clear screen down");
         clearScreenDown(output);
         debug("write prompt");
-        output.write(newPrompt);
+        output.write(renderedPrompt);
 
         if (state.prompt.cursor.cols === 0) {
           debug("write space");

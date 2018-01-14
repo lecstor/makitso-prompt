@@ -11,13 +11,15 @@ const debug = require("./debug");
  */
 function moveCursorLeft(state, places) {
   debug({ moveCursor: { places } });
-  let { linePos } = state.prompt.cursor;
-  const maxPlaces = state.prompt.command.text.length;
+  let { linePos } = state.commandLine.cursor;
+  const maxPlaces = state.commandLine.command.text.length;
   let newLinePos = linePos + places;
   if (newLinePos > maxPlaces) {
     newLinePos = maxPlaces;
   }
-  return applyPatch(state, { prompt: { cursor: { linePos: newLinePos } } });
+  return applyPatch(state, {
+    commandLine: { cursor: { linePos: newLinePos } }
+  });
 }
 
 /**
@@ -28,29 +30,29 @@ function moveCursorLeft(state, places) {
  * @returns {Object} state
  */
 function moveCursorRight(state, places) {
-  let { linePos } = state.prompt.cursor;
+  let { linePos } = state.commandLine.cursor;
   if (places > linePos) {
     places = linePos;
   }
   return applyPatch(state, {
-    prompt: { cursor: { linePos: linePos - places } }
+    commandLine: { cursor: { linePos: linePos - places } }
   });
 }
 
 function deleteLeft(state) {
-  const { linePos } = state.prompt.cursor;
+  const { linePos } = state.commandLine.cursor;
   if (!linePos) {
     return applyPatch(state, {
-      prompt: {
+      commandLine: {
         command: {
-          text: state.prompt.command.text.slice(0, -1)
+          text: state.commandLine.command.text.slice(0, -1)
         }
       }
     });
   } else {
-    const { text } = state.prompt.command;
+    const { text } = state.commandLine.command;
     return applyPatch(state, {
-      prompt: {
+      commandLine: {
         command: {
           text: text.slice(0, -linePos - 1) + text.slice(-linePos)
         }
@@ -60,17 +62,17 @@ function deleteLeft(state) {
 }
 
 function deleteRight(state) {
-  const { linePos } = state.prompt.cursor;
+  const { linePos } = state.commandLine.cursor;
   if (!linePos) {
     return state;
   }
-  const command = state.prompt.command.text;
+  const command = state.commandLine.command.text;
   return applyPatch(state, {
-    prompt: {
+    commandLine: {
       command: {
         text: command.slice(0, -linePos) + command.slice(-linePos + 1),
         cursor: {
-          linePos: state.prompt.cursor.linePos - 1
+          linePos: state.commandLine.cursor.linePos - 1
         }
       }
     }

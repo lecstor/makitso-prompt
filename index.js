@@ -14,7 +14,7 @@ const { applyPatch } = require("./immutably");
 const {
   updateCursorPos,
   initialState,
-  newPrompt,
+  newCommandLine,
   newMode
 } = require("./state-utils");
 
@@ -66,13 +66,13 @@ function Prompt(options = {}) {
         mode: newMode(mode),
         header,
         footer,
-        prompt: newPrompt(state, { prompt: options.prompt, command }),
+        commandLine: newCommandLine(state, { prompt: options.prompt, command }),
         secret,
         default: { command: defaultCommand },
         returnCommand: false
       });
       state = applyPatch(state, {
-        prompt: {
+        commandLine: {
           cursor: { linePos: 0 },
           eol: getEndOfLinePos(state.output.width, this.renderPromptLine(state))
         }
@@ -119,9 +119,9 @@ function Prompt(options = {}) {
           debug({ state });
           debug({ header: `"${state.header}"` });
 
-          if (this.promptlineChanged(this.state, state)) {
+          if (this.commandLineChanged(this.state, state)) {
             state = applyPatch(state, {
-              prompt: {
+              commandLine: {
                 eol: getEndOfLinePos(
                   state.output.width,
                   this.renderPromptLine(state)
@@ -153,7 +153,7 @@ function Prompt(options = {}) {
           }
 
           if (state.returnCommand) {
-            this.resolve(state.prompt.command.text.trim());
+            this.resolve(state.commandLine.command.text.trim());
           }
         } catch (error) {
           this.reject(error);
@@ -183,12 +183,12 @@ function Prompt(options = {}) {
       return applyPatch(state, {
         header: "",
         footer: "",
-        prompt: { text: "", command: { text: "" } }
+        commandLine: { text: "", command: { text: "" } }
       });
     },
 
     /**
-     * update state so only render the prompt line
+     * update state so we only render the commandLine
      *
      * @param {Object} state - app state
      * @returns {Object} state
@@ -241,9 +241,9 @@ function Prompt(options = {}) {
      *
      * @param {Object} prevState - previous state
      * @param {Object} state - current state
-     * @returns {Boolean} prompt line changed
+     * @returns {Boolean} commandLine changed
      */
-    promptlineChanged(prevState, state) {
+    commandLineChanged(prevState, state) {
       const renderedPrompt = this.renderPromptLine(prevState);
       const newRenderedPrompt = this.renderPromptLine(state);
       return renderedPrompt !== newRenderedPrompt;
@@ -285,7 +285,7 @@ function Prompt(options = {}) {
       return (
         this.headerChanged(prevState, state) ||
         this.footerChanged(prevState, state) ||
-        this.promptlineChanged(prevState, state)
+        this.commandLineChanged(prevState, state)
       );
     },
 
@@ -298,8 +298,8 @@ function Prompt(options = {}) {
      */
     cursorMoved(prevState, state) {
       return (
-        prevState.prompt.cursor !== state.prompt.cursor ||
-        this.promptlineChanged(prevState, state)
+        prevState.commandLine.cursor !== state.commandLine.cursor ||
+        this.commandLineChanged(prevState, state)
       );
     },
 
@@ -312,7 +312,7 @@ function Prompt(options = {}) {
      */
     renderPromptLine(state) {
       // debug({ renderPromptLine: state });
-      const prompt = state.prompt.text;
+      const prompt = state.commandLine.text;
       const cmd = this.renderCommand(state);
       const defaultCmd =
         state.returnCommand || cmd ? "" : this.renderDefault(state);
@@ -327,7 +327,7 @@ function Prompt(options = {}) {
      * @returns {String} command
      */
     renderCommand(state) {
-      const command = state.prompt.command.text;
+      const command = state.commandLine.command.text;
       if (state.secret) {
         return "*".repeat(command.length);
       }
@@ -388,15 +388,15 @@ function Prompt(options = {}) {
         const renderedPrompt = this.renderPromptLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
-        if (state.prompt.cursor.rows > 0) {
+        if (state.commandLine.cursor.rows > 0) {
           // if the last char on the line is in the last column in the terminal
           // then we need to make room for the next line
-          if (state.prompt.cursor.cols === 0) {
+          if (state.commandLine.cursor.cols === 0) {
             debug("write newline");
             output.write("\r\n");
           }
-          debug(`moveCursor 0, ${-state.prompt.cursor.rows}`);
-          moveCursor(output, 0, -state.prompt.cursor.rows);
+          debug(`moveCursor 0, ${-state.commandLine.cursor.rows}`);
+          moveCursor(output, 0, -state.commandLine.cursor.rows);
         }
         cursorTo(output, 0);
         debug("clear screen down");
@@ -404,7 +404,7 @@ function Prompt(options = {}) {
         debug("write prompt");
         output.write(renderedPrompt);
 
-        if (state.prompt.cursor.cols === 0) {
+        if (state.commandLine.cursor.cols === 0) {
           debug("write space");
           output.write(" "); // Force terminal to allocate a new line
         }
@@ -418,7 +418,7 @@ function Prompt(options = {}) {
         moveCursor(output, 0, -(endOfLinePos.rows + 1));
       }
 
-      cursorTo(output, state.prompt.cursor.cols);
+      cursorTo(output, state.commandLine.cursor.cols);
     },
 
     /**

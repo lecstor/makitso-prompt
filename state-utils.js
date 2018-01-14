@@ -3,13 +3,34 @@ const _mapValues = require("lodash/mapValues");
 const { getStringWidth } = require("./readline-funcs");
 const { applyPatch } = require("./immutably");
 
+/**
+ * The app state
+ * @typedef {Object} State
+ * @property {Prompt} prompt -
+ */
+
+/**
+ * get a command object
+ *
+ * @param {String} command - command text
+ * @returns {Object} text and text width
+ */
 function newCommand(command) {
   return command !== undefined
     ? { text: command, width: command.length }
     : undefined;
 }
 
-function newPrompt(state, { prompt, command }) {
+/**
+ * get a prompt object
+ *
+ * @param {Object} state - current app state
+ * @param {Object} props -
+ * @param {String} [props.prompt=state.default.prompt] - prompt text
+ * @param {String} [props.command] - command text
+ * @returns {Object} text, width, command
+ */
+function newCommandLine(state, { prompt, command }) {
   if (prompt) {
     const width = getStringWidth(prompt);
     return {
@@ -30,12 +51,14 @@ function newMode(state, mode) {
 }
 
 function updateCursorPos(state) {
-  const { linePos } = state.prompt.cursor;
+  const { linePos } = state.commandLine.cursor;
   if (!linePos) {
-    return applyPatch(state, { prompt: { cursor: state.prompt.eol } });
+    return applyPatch(state, {
+      commandLine: { cursor: state.commandLine.eol }
+    });
   }
-  const cursor = { ...state.prompt.eol };
-  if (linePos > state.prompt.eol.cols) {
+  const cursor = { ...state.commandLine.eol };
+  if (linePos > state.commandLine.eol.cols) {
     // prompt line is wrapped and cursor is not on last line
     let adjustedLinePos = linePos - cursor.cols;
     cursor.rows--;
@@ -47,17 +70,17 @@ function updateCursorPos(state) {
   } else {
     cursor.cols -= linePos;
   }
-  return applyPatch(state, { prompt: { cursor } });
+  return applyPatch(state, { commandLine: { cursor } });
 }
 
 function initialState({ prompt, mode, output }) {
   return {
     default: {
-      prompt: newPrompt({}, { prompt }),
+      prompt: newCommandLine({}, { prompt }),
       mode
     },
     mode,
-    prompt: {
+    commandLine: {
       text: "",
       width: 0,
       command: {
@@ -90,7 +113,7 @@ function initialState({ prompt, mode, output }) {
 module.exports = {
   newCommand,
   newMode,
-  newPrompt,
+  newCommandLine,
   updateCursorPos,
   initialState
 };

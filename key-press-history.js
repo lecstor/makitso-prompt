@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 
 const { applyPatch } = require("./immutably");
-const { newPrompt, newMode, newCommand } = require("./state-utils");
+const { newCommandLine, newMode, newCommand } = require("./state-utils");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
@@ -34,7 +34,7 @@ const keyPressAutoComplete = {
     if (state.history && state.history.commands.length > 1) {
       state = applyPatch(state, {
         mode: newMode(state, { history: true }),
-        prompt: newPrompt(state, { prompt: this.prompt }),
+        commandLine: newCommandLine(state, { prompt: this.prompt }),
         history: { index: 0 }
       });
       return this.pressKey.up(state);
@@ -64,7 +64,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   pushHistory(state) {
-    const command = state.prompt.command.text;
+    const command = state.commandLine.command.text;
     const history = this.getHistory(state);
     if (!command || command === history[0]) {
       return applyPatch(state, {
@@ -83,7 +83,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   updateHistory(state) {
-    const command = state.prompt.command.text;
+    const command = state.commandLine.command.text;
     const history = this.getHistory(state);
     return applyPatch(state, {
       history: { commands: [command, ...history] }
@@ -122,7 +122,7 @@ const keyPressAutoComplete = {
         return state;
       }
       return applyPatch(state, {
-        prompt: { command: { text: state.history.commands[index + 1] } },
+        commandLine: { command: { text: state.history.commands[index + 1] } },
         history: { index: index + 1 }
       });
     },
@@ -138,7 +138,7 @@ const keyPressAutoComplete = {
         return this.escape(state);
       }
       return applyPatch(state, {
-        prompt: {
+        commandLine: {
           command: newCommand(state.history.commands[index - 1])
         },
         history: { index: index - 1 }
@@ -153,7 +153,9 @@ const keyPressAutoComplete = {
     return(state) {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
-        prompt: newPrompt(state, { prompt: state.default.prompt.text }),
+        commandLine: newCommandLine(state, {
+          prompt: state.default.prompt.text
+        }),
         history: { index: 0 }
       });
     },
@@ -167,7 +169,7 @@ const keyPressAutoComplete = {
     escape(state) {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
-        prompt: newPrompt(state, {
+        commandLine: newCommandLine(state, {
           prompt: state.default.prompt.text,
           command: state.history.commands[0]
         }),

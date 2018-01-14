@@ -7,7 +7,7 @@ describe("render", () => {
   test("add header to prompt", () => {
     const prompt = Prompt();
     const prevState = {
-      prompt: {
+      commandLine: {
         text: "Makitso>",
         width: 9,
         command: { text: "vpn disconnect foo bar baz", width: 0 },

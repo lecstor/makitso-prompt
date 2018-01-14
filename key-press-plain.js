@@ -24,10 +24,10 @@ const keyPressPlain = {
   escape: state => state,
   left: state => moveCursorLeft(state, 1),
   return: state => {
-    let { text } = state.prompt.command;
+    let { text } = state.commandLine.command;
     if (text === "" && state.default.command) {
       state = applyPatch(state, {
-        prompt: { command: { text: state.default.command } }
+        commandLine: { command: { text: state.default.command } }
       });
     }
     return applyPatch(state, { returnCommand: true });
@@ -40,8 +40,8 @@ const keyPressPlain = {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
-      let { text } = state.prompt.command;
-      let { linePos } = state.prompt.cursor;
+      let { text } = state.commandLine.command;
+      let { linePos } = state.commandLine.cursor;
       if (linePos) {
         const start = text.slice(0, -linePos);
         const end = text.slice(-linePos);
@@ -50,9 +50,9 @@ const keyPressPlain = {
         text = `${text}${press.str}`;
       }
       state = applyPatch(state, {
-        prompt: {
+        commandLine: {
           command: { text },
-          cursor: { cols: state.prompt.cursor.cols + 1 }
+          cursor: { cols: state.commandLine.cursor.cols + 1 }
         }
       });
     }

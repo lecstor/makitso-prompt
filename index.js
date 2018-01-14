@@ -74,7 +74,10 @@ function Prompt(options = {}) {
       state = applyPatch(state, {
         commandLine: {
           cursor: { linePos: 0 },
-          eol: getEndOfLinePos(state.output.width, this.renderPromptLine(state))
+          eol: getEndOfLinePos(
+            state.output.width,
+            this.renderCommandLine(state)
+          )
         }
       });
       state = this.startState(state);
@@ -124,7 +127,7 @@ function Prompt(options = {}) {
               commandLine: {
                 eol: getEndOfLinePos(
                   state.output.width,
-                  this.renderPromptLine(state)
+                  this.renderCommandLine(state)
                 )
               }
             });
@@ -183,7 +186,7 @@ function Prompt(options = {}) {
       return applyPatch(state, {
         header: "",
         footer: "",
-        commandLine: { text: "", command: { text: "" } }
+        commandLine: newCommandLine(state, { prompt: "", command: "" })
       });
     },
 
@@ -244,8 +247,8 @@ function Prompt(options = {}) {
      * @returns {Boolean} commandLine changed
      */
     commandLineChanged(prevState, state) {
-      const renderedPrompt = this.renderPromptLine(prevState);
-      const newRenderedPrompt = this.renderPromptLine(state);
+      const renderedPrompt = this.renderCommandLine(prevState);
+      const newRenderedPrompt = this.renderCommandLine(state);
       return renderedPrompt !== newRenderedPrompt;
     },
 
@@ -310,9 +313,9 @@ function Prompt(options = {}) {
      * @param {Object} state - current state
      * @returns {String} prompt line
      */
-    renderPromptLine(state) {
+    renderCommandLine(state) {
       // debug({ renderPromptLine: state });
-      const prompt = state.commandLine.text;
+      const prompt = state.commandLine.prompt.text;
       const cmd = this.renderCommand(state);
       const defaultCmd =
         state.returnCommand || cmd ? "" : this.renderDefault(state);
@@ -385,7 +388,7 @@ function Prompt(options = {}) {
 
       if (this.commandlineNeedsRender(prevState, state)) {
         debug("commandlineNeedsRender");
-        const renderedPrompt = this.renderPromptLine(state);
+        const renderedPrompt = this.renderCommandLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
         if (state.commandLine.cursor.rows > 0) {

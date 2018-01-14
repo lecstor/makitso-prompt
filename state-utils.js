@@ -21,6 +21,14 @@ function newCommand(command) {
     : undefined;
 }
 
+function newPrompt(prompt) {
+  const width = getStringWidth(prompt);
+  return {
+    text: prompt,
+    width
+  };
+}
+
 /**
  * get a prompt object
  *
@@ -31,16 +39,14 @@ function newCommand(command) {
  * @returns {Object} text, width, command
  */
 function newCommandLine(state, { prompt, command }) {
-  if (prompt) {
-    const width = getStringWidth(prompt);
+  if (prompt !== undefined) {
     return {
-      text: prompt,
-      width,
+      prompt: newPrompt(prompt),
       command: newCommand(command)
     };
   } else {
     return {
-      ...state.default.prompt,
+      prompt: state.default.prompt,
       command: newCommand(command)
     };
   }
@@ -76,16 +82,18 @@ function updateCursorPos(state) {
 function initialState({ prompt, mode, output }) {
   return {
     default: {
-      prompt: newCommandLine({}, { prompt }),
+      prompt: newPrompt(prompt),
       mode
     },
     mode,
     commandLine: {
-      text: "",
-      width: 0,
+      prompt: {
+        text: "",
+        width: 0
+      },
       command: {
         text: "",
-        width: ""
+        width: 0
       },
       eol: { cols: 0, rows: 0 },
       cursor: {
@@ -112,8 +120,9 @@ function initialState({ prompt, mode, output }) {
 
 module.exports = {
   newCommand,
-  newMode,
   newCommandLine,
+  newMode,
+  newPrompt,
   updateCursorPos,
   initialState
 };

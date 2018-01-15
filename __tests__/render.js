@@ -12,7 +12,6 @@ describe("render", () => {
         command: "vpn disconnect foo bar baz",
         cursor: { cols: 24, rows: 0, linePos: 0, col: null }
       },
-      output: { width: 103, height: 57 },
       footer: "prod sandpit"
     };
     const state = applyPatch(prevState, {

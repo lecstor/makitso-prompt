@@ -3,8 +3,6 @@ const { Writable } = require("stream");
 var AnsiTerminal = require("node-ansiterminal").AnsiTerminal;
 var AnsiParser = require("node-ansiparser");
 
-const debug = require("./debug");
-
 function newOutput() {
   return new Writable({
     write(chunk, encoding, callback) {

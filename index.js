@@ -34,9 +34,21 @@ function Prompt(options = {}) {
   return {
     input,
     output,
-    state: initialState({ prompt, mode, output }),
+    state: initialState({ prompt, mode }),
     keyPressers: [keyPressPlain, keyPressCtrl],
-
+    ioState: {
+      input: {
+        pause: true,
+        rawMode: false,
+        listener: {
+          keypress: null
+        }
+      },
+      output: {
+        width: output.columns,
+        height: output.rows
+      }
+    },
     /**
      * start a prompt
      *
@@ -60,8 +72,9 @@ function Prompt(options = {}) {
 
       emitKeypressEvents(this.input);
 
+      this.listenToInput();
+
       let state = this.state;
-      state = this.listenToInput(state);
       state = applyPatch(state, {
         mode: newMode(mode),
         header,
@@ -78,13 +91,13 @@ function Prompt(options = {}) {
         commandLine: {
           cursor: { linePos: 0 },
           eol: getEndOfLinePos(
-            state.output.width,
+            this.output.columns,
             this.renderCommandLine(state)
           )
         }
       });
       state = this.startState(state);
-      state = updateCursorPos(state);
+      state = updateCursorPos(state, this.output.columns);
 
       this.render({ state, prevState: this.state, output: this.output });
       this.state = state;
@@ -126,11 +139,15 @@ function Prompt(options = {}) {
           debug({ header: `"${state.header}"` });
 
           if (this.commandLineChanged(this.state, state)) {
-            state = updateEol(state, this.renderCommandLine(state));
-            state = updateCursorPos(state);
+            state = updateEol(
+              state,
+              this.output.columns,
+              this.renderCommandLine(state)
+            );
+            state = updateCursorPos(state, this.output.columns);
           } else if (this.cursorMoved(this.state, state)) {
             debug({ state });
-            state = updateCursorPos(state);
+            state = updateCursorPos(state, this.output.columns);
           }
 
           if (state.exit) {
@@ -140,9 +157,13 @@ function Prompt(options = {}) {
           }
 
           if (state.exit || state.returnCommand) {
-            state = this.stopListenToInput(state);
-            state = updateEol(state, this.renderCommandLine(state));
-            state = updateCursorPos(state);
+            this.stopListenToInput();
+            state = updateEol(
+              state,
+              this.output.columns,
+              this.renderCommandLine(state)
+            );
+            state = updateCursorPos(state, this.output.columns);
           }
 
           this.render({ state, prevState: this.state, output: this.output });
@@ -205,37 +226,35 @@ function Prompt(options = {}) {
     /**
      * start listening for keyboard input
      *
-     * @param {Object} state - current state
-     * @returns {Object} state
+     * @returns {void}
      */
-    listenToInput(state) {
-      state = applyPatch(state, {
-        input: {
-          rawMode: true,
-          pause: false,
-          listener: {
-            keypress: (s, k) => {
-              this.onKeyPress(s, k);
-            }
+    listenToInput() {
+      const inputState = applyPatch(this.ioState.input, {
+        rawMode: true,
+        pause: false,
+        listener: {
+          keypress: (s, k) => {
+            this.onKeyPress(s, k);
           }
         }
       });
-      this.updateInput({ state, prevState: this.state, input: this.input });
-      return state;
+      this.updateInput(inputState);
+      this.ioState.input = inputState;
     },
 
     /**
      * stop listening for keyboard input
      *
-     * @param {Object} state - current state
-     * @returns {Object} state
+     * @returns {void}
      */
-    stopListenToInput(state) {
-      state = applyPatch(state, {
-        input: { rawMode: false, pause: true, listener: { keypress: null } }
+    stopListenToInput() {
+      const inputState = applyPatch(this.ioState.input, {
+        rawMode: false,
+        pause: true,
+        listener: { keypress: null }
       });
-      this.updateInput({ state, prevState: this.state, input: this.input });
-      return state;
+      this.updateInput(inputState);
+      this.ioState.input = inputState;
     },
 
     /**
@@ -360,7 +379,7 @@ function Prompt(options = {}) {
      */
     render({ state, prevState, output }) {
       // debug({ render: { prevState, state } });
-      debug({ render: { state } });
+      // debug({ render: { state } });
 
       if (state === prevState) {
         return;
@@ -416,7 +435,7 @@ function Prompt(options = {}) {
       if (state.footer) {
         debug("write newline + footer");
         output.write("\r\n" + state.footer);
-        const endOfLinePos = getEndOfLinePos(state.output.width, state.footer);
+        const endOfLinePos = getEndOfLinePos(this.output.columns, state.footer);
         debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
         moveCursor(output, 0, -(endOfLinePos.rows + 1));
       }
@@ -427,38 +446,36 @@ function Prompt(options = {}) {
     /**
      * render the current state to the terminal
      *
-     * @param {Object} param0 -
-     * @param {Object} param0.state - current state
-     * @param {Object} param0.prevState - previous state
-     * @param {Object} param0.input - input stream
-     * @returns {Void} undefined
+     * @param {Object} inputState - new state of input
+     * @returns {void}
      */
-    updateInput({ prevState, state, input }) {
-      prevState = prevState.input;
-      state = state.input;
-      if (prevState !== state) {
-        debug("update input state");
-        if (prevState.rawMode !== state.rawMode) {
-          debug(`set raw mode: ${state.rawMode}`);
-          input.setRawMode(state.rawMode);
+    updateInput(inputState) {
+      const prevState = this.ioState.input;
+      debug({ prevState, inputState });
+      if (prevState !== inputState) {
+        if (prevState.rawMode !== inputState.rawMode) {
+          debug(`set input raw mode: ${inputState.rawMode}`);
+          this.input.setRawMode(inputState.rawMode);
         }
-        if (prevState.listener !== state.listener) {
-          _forEach(state.listener, (val, key) => {
+        if (prevState.listener !== inputState.listener) {
+          _forEach(inputState.listener, (val, key) => {
             if (val !== prevState.listener[key]) {
               if (val) {
-                input.on(key, val);
+                debug(`add input listener "${key}"`);
+                this.input.on(key, val);
               } else {
-                input.removeListener(key, prevState.listener[key]);
+                debug(`remove input listener "${key}"`);
+                this.input.removeListener(key, prevState.listener[key]);
               }
             }
           });
         }
-        if (prevState.pause !== state.pause) {
-          debug({ inputPause: state.pause });
-          if (state.pause) {
-            input.pause();
+        if (prevState.pause !== inputState.pause) {
+          debug({ inputPause: inputState.pause });
+          if (inputState.pause) {
+            this.input.pause();
           } else {
-            input.resume();
+            this.input.resume();
           }
         }
       }

@@ -2,6 +2,7 @@ const _mapValues = require("lodash/mapValues");
 
 // const { getStringWidth } = require("./readline-funcs");
 const { applyPatch } = require("./immutably");
+const { getEndOfLinePos } = require("./terminal");
 
 /**
  * The app state
@@ -11,6 +12,14 @@ const { applyPatch } = require("./immutably");
 
 function newMode(state, mode) {
   return Object.assign(_mapValues(state.mode, val => false), mode);
+}
+
+function updateEol(state, commandLine) {
+  return applyPatch(state, {
+    commandLine: {
+      eol: getEndOfLinePos(state.output.width, commandLine)
+    }
+  });
 }
 
 function updateCursorPos(state) {
@@ -72,5 +81,6 @@ function initialState({ prompt, mode, output }) {
 module.exports = {
   newMode,
   updateCursorPos,
+  updateEol,
   initialState
 };

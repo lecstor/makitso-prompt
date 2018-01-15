@@ -11,7 +11,12 @@ const {
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
 const { applyPatch } = require("./immutably");
-const { updateCursorPos, initialState, newMode } = require("./state-utils");
+const {
+  updateCursorPos,
+  updateEol,
+  initialState,
+  newMode
+} = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -121,14 +126,7 @@ function Prompt(options = {}) {
           debug({ header: `"${state.header}"` });
 
           if (this.commandLineChanged(this.state, state)) {
-            state = applyPatch(state, {
-              commandLine: {
-                eol: getEndOfLinePos(
-                  state.output.width,
-                  this.renderCommandLine(state)
-                )
-              }
-            });
+            state = updateEol(state, this.renderCommandLine(state));
             state = updateCursorPos(state);
           } else if (this.cursorMoved(this.state, state)) {
             debug({ state });
@@ -143,14 +141,17 @@ function Prompt(options = {}) {
 
           if (state.exit || state.returnCommand) {
             state = this.stopListenToInput(state);
+            state = updateEol(state, this.renderCommandLine(state));
+            state = updateCursorPos(state);
           }
 
           this.render({ state, prevState: this.state, output: this.output });
           this.state = state;
 
-          if (state.exit || state.returnCommand) {
+          // if (state.exit || state.returnCommand) {
+          if (state.returnCommand) {
             debug("write newline");
-            this.output.write("\n");
+            this.output.write("\r\n");
           }
 
           if (state.returnCommand) {
@@ -359,6 +360,7 @@ function Prompt(options = {}) {
      */
     render({ state, prevState, output }) {
       // debug({ render: { prevState, state } });
+      debug({ render: { state } });
 
       if (state === prevState) {
         return;
@@ -386,7 +388,7 @@ function Prompt(options = {}) {
 
       if (this.commandlineNeedsRender(prevState, state)) {
         debug("commandlineNeedsRender");
-        const renderedPrompt = this.renderCommandLine(state);
+        const renderedCommandLine = this.renderCommandLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
         if (state.commandLine.cursor.rows > 0) {
@@ -403,9 +405,9 @@ function Prompt(options = {}) {
         debug("clear screen down");
         clearScreenDown(output);
         debug("write prompt");
-        output.write(renderedPrompt);
+        output.write(renderedCommandLine);
 
-        if (state.commandLine.cursor.cols === 0) {
+        if (renderedCommandLine && state.commandLine.cursor.cols === 0) {
           debug("write space");
           output.write(" "); // Force terminal to allocate a new line
         }

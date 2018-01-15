@@ -11,12 +11,7 @@ const {
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
 const { applyPatch } = require("./immutably");
-const {
-  updateCursorPos,
-  initialState,
-  newCommandLine,
-  newMode
-} = require("./state-utils");
+const { updateCursorPos, initialState, newMode } = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -66,7 +61,10 @@ function Prompt(options = {}) {
         mode: newMode(mode),
         header,
         footer,
-        commandLine: newCommandLine(state, { prompt: options.prompt, command }),
+        commandLine: {
+          prompt: options.prompt || state.default.prompt,
+          command
+        },
         secret,
         default: { command: defaultCommand },
         returnCommand: false
@@ -186,7 +184,7 @@ function Prompt(options = {}) {
       return applyPatch(state, {
         header: "",
         footer: "",
-        commandLine: newCommandLine(state, { prompt: "", command: "" })
+        commandLine: { prompt: "", command: "" }
       });
     },
 

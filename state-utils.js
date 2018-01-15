@@ -9,47 +9,6 @@ const { applyPatch } = require("./immutably");
  * @property {Prompt} prompt -
  */
 
-/**
- * get a command object
- *
- * @param {String} command - command text
- * @returns {Object} text and text width
- */
-// function newCommand(command) {
-//   return command !== undefined
-//     ? // ? { text: command, width: command.length }
-//       { text: command }
-//     : undefined;
-// }
-
-// function newPrompt(prompt) {
-//   // const width = getStringWidth(prompt);
-//   return {
-//     text: prompt
-//     // width
-//   };
-// }
-
-/**
- * get a prompt object
- *
- * @param {Object} state - current app state
- * @param {Object} props -
- * @param {String} [props.prompt=state.default.prompt] - prompt text
- * @param {String} [props.command] - command text
- * @returns {Object} prompt, command
- */
-function newCommandLine(state, { prompt, command }) {
-  if (prompt !== undefined) {
-    return { prompt, command };
-  } else {
-    return {
-      prompt: state.default.prompt,
-      command
-    };
-  }
-}
-
 function newMode(state, mode) {
   return Object.assign(_mapValues(state.mode, val => false), mode);
 }
@@ -111,7 +70,6 @@ function initialState({ prompt, mode, output }) {
 }
 
 module.exports = {
-  newCommandLine,
   newMode,
   updateCursorPos,
   initialState

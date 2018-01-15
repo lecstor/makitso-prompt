@@ -1,6 +1,6 @@
 const _mapValues = require("lodash/mapValues");
 
-const { getStringWidth } = require("./readline-funcs");
+// const { getStringWidth } = require("./readline-funcs");
 const { applyPatch } = require("./immutably");
 
 /**
@@ -15,19 +15,20 @@ const { applyPatch } = require("./immutably");
  * @param {String} command - command text
  * @returns {Object} text and text width
  */
-function newCommand(command) {
-  return command !== undefined
-    ? { text: command, width: command.length }
-    : undefined;
-}
+// function newCommand(command) {
+//   return command !== undefined
+//     ? // ? { text: command, width: command.length }
+//       { text: command }
+//     : undefined;
+// }
 
-function newPrompt(prompt) {
-  const width = getStringWidth(prompt);
-  return {
-    text: prompt,
-    width
-  };
-}
+// function newPrompt(prompt) {
+//   // const width = getStringWidth(prompt);
+//   return {
+//     text: prompt
+//     // width
+//   };
+// }
 
 /**
  * get a prompt object
@@ -36,18 +37,15 @@ function newPrompt(prompt) {
  * @param {Object} props -
  * @param {String} [props.prompt=state.default.prompt] - prompt text
  * @param {String} [props.command] - command text
- * @returns {Object} text, width, command
+ * @returns {Object} prompt, command
  */
 function newCommandLine(state, { prompt, command }) {
   if (prompt !== undefined) {
-    return {
-      prompt: newPrompt(prompt),
-      command: newCommand(command)
-    };
+    return { prompt, command };
   } else {
     return {
       prompt: state.default.prompt,
-      command: newCommand(command)
+      command
     };
   }
 }
@@ -82,19 +80,13 @@ function updateCursorPos(state) {
 function initialState({ prompt, mode, output }) {
   return {
     default: {
-      prompt: newPrompt(prompt),
+      prompt,
       mode
     },
     mode,
     commandLine: {
-      prompt: {
-        text: "",
-        width: 0
-      },
-      command: {
-        text: "",
-        width: 0
-      },
+      prompt: "",
+      command: "",
       eol: { cols: 0, rows: 0 },
       cursor: {
         cols: 0,
@@ -119,10 +111,8 @@ function initialState({ prompt, mode, output }) {
 }
 
 module.exports = {
-  newCommand,
   newCommandLine,
   newMode,
-  newPrompt,
   updateCursorPos,
   initialState
 };

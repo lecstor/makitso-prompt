@@ -5,14 +5,14 @@ function keyPressAutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
       if (state.mode.command) {
-        let command = state.commandLine.command.text;
+        let { command } = state.commandLine;
 
         const matches = _filter(choices, choice => choice.startsWith(command));
 
         if (press.key && press.key.name === "tab" && matches.length === 1) {
           state = applyPatch(state, {
             commandLine: {
-              command: { text: matches[0] + " " },
+              command: matches[0] + " ",
               cursor: { cols: null }
             }
           });

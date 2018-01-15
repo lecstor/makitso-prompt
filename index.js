@@ -156,7 +156,7 @@ function Prompt(options = {}) {
           }
 
           if (state.returnCommand) {
-            this.resolve(state.commandLine.command.text.trim());
+            this.resolve(state.commandLine.command.trim());
           }
         } catch (error) {
           this.reject(error);
@@ -315,7 +315,7 @@ function Prompt(options = {}) {
      */
     renderCommandLine(state) {
       // debug({ renderPromptLine: state });
-      const prompt = state.commandLine.prompt.text;
+      const { prompt } = state.commandLine;
       const cmd = this.renderCommand(state);
       const defaultCmd =
         state.returnCommand || cmd ? "" : this.renderDefault(state);
@@ -330,7 +330,7 @@ function Prompt(options = {}) {
      * @returns {String} command
      */
     renderCommand(state) {
-      const command = state.commandLine.command.text;
+      const { command } = state.commandLine;
       if (state.secret) {
         return "*".repeat(command.length);
       }

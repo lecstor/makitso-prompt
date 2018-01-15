@@ -1,7 +1,7 @@
 const chalk = require("chalk");
 
 const { applyPatch } = require("./immutably");
-const { newCommandLine, newMode, newCommand } = require("./state-utils");
+const { newCommandLine, newMode } = require("./state-utils");
 
 const keyPressAutoComplete = {
   keyPress(state, press) {
@@ -64,7 +64,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   pushHistory(state) {
-    const command = state.commandLine.command.text;
+    const { command } = state.commandLine;
     const history = this.getHistory(state);
     if (!command || command === history[0]) {
       return applyPatch(state, {
@@ -83,7 +83,7 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   updateHistory(state) {
-    const command = state.commandLine.command.text;
+    const { command } = state.commandLine;
     const history = this.getHistory(state);
     return applyPatch(state, {
       history: { commands: [command, ...history] }
@@ -122,7 +122,7 @@ const keyPressAutoComplete = {
         return state;
       }
       return applyPatch(state, {
-        commandLine: { command: { text: state.history.commands[index + 1] } },
+        commandLine: { command: state.history.commands[index + 1] },
         history: { index: index + 1 }
       });
     },
@@ -139,7 +139,7 @@ const keyPressAutoComplete = {
       }
       return applyPatch(state, {
         commandLine: {
-          command: newCommand(state.history.commands[index - 1])
+          command: state.history.commands[index - 1]
         },
         history: { index: index - 1 }
       });
@@ -154,7 +154,7 @@ const keyPressAutoComplete = {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
         commandLine: newCommandLine(state, {
-          prompt: state.default.prompt.text
+          prompt: state.default.prompt
         }),
         history: { index: 0 }
       });
@@ -170,7 +170,7 @@ const keyPressAutoComplete = {
       return applyPatch(state, {
         mode: newMode(state, state.default.mode),
         commandLine: newCommandLine(state, {
-          prompt: state.default.prompt.text,
+          prompt: state.default.prompt,
           command: state.history.commands[0]
         }),
         history: { index: 0 }

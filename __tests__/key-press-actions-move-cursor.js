@@ -8,7 +8,7 @@ describe("key-press-actions", () => {
           commandLine: {
             cursor: { linePos: 0 },
             width: 5,
-            command: { text: "" }
+            command: ""
           }
         };
         const result = moveCursorLeft(state, 2);
@@ -19,7 +19,7 @@ describe("key-press-actions", () => {
         const state = {
           commandLine: {
             cursor: { linePos: 0 },
-            command: { text: "abc" }
+            command: "abc"
           }
         };
         const result = moveCursorLeft(state, 6);
@@ -30,7 +30,7 @@ describe("key-press-actions", () => {
         const state = {
           commandLine: {
             cursor: { linePos: 0 },
-            command: { text: "abc" }
+            command: "abc"
           }
         };
         const result = moveCursorLeft(state, 2);
@@ -43,7 +43,7 @@ describe("key-press-actions", () => {
         const state = {
           commandLine: {
             cursor: { linePos: 0 },
-            command: { text: "abc" }
+            command: "abc"
           }
         };
         const result = moveCursorRight(state, 2);
@@ -54,7 +54,7 @@ describe("key-press-actions", () => {
         const state = {
           commandLine: {
             cursor: { linePos: 3 },
-            command: { text: "abc" }
+            command: "abc"
           }
         };
         const result = moveCursorRight(state, 2);
@@ -65,7 +65,7 @@ describe("key-press-actions", () => {
         const state = {
           commandLine: {
             cursor: { linePos: 2 },
-            command: { text: "abc" }
+            command: "abc"
           }
         };
         const result = moveCursorRight(state, 5);

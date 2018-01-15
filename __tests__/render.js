@@ -8,8 +8,8 @@ describe("render", () => {
     const prompt = Prompt();
     const prevState = {
       commandLine: {
-        prompt: { text: "Makitso>", width: 9 },
-        command: { text: "vpn disconnect foo bar baz", width: 0 },
+        prompt: "Makitso>",
+        command: "vpn disconnect foo bar baz",
         cursor: { cols: 24, rows: 0, linePos: 0, col: null }
       },
       output: { width: 103, height: 57 },

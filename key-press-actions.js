@@ -12,7 +12,7 @@ const debug = require("./debug");
 function moveCursorLeft(state, places) {
   debug({ moveCursor: { places } });
   let { linePos } = state.commandLine.cursor;
-  const maxPlaces = state.commandLine.command.text.length;
+  const maxPlaces = state.commandLine.command.length;
   let newLinePos = linePos + places;
   if (newLinePos > maxPlaces) {
     newLinePos = maxPlaces;
@@ -44,18 +44,14 @@ function deleteLeft(state) {
   if (!linePos) {
     return applyPatch(state, {
       commandLine: {
-        command: {
-          text: state.commandLine.command.text.slice(0, -1)
-        }
+        command: state.commandLine.command.slice(0, -1)
       }
     });
   } else {
-    const { text } = state.commandLine.command;
+    const { command } = state.commandLine;
     return applyPatch(state, {
       commandLine: {
-        command: {
-          text: text.slice(0, -linePos - 1) + text.slice(-linePos)
-        }
+        command: command.slice(0, -linePos - 1) + command.slice(-linePos)
       }
     });
   }
@@ -66,14 +62,12 @@ function deleteRight(state) {
   if (!linePos) {
     return state;
   }
-  const command = state.commandLine.command.text;
+  const { command } = state.commandLine;
   return applyPatch(state, {
     commandLine: {
-      command: {
-        text: command.slice(0, -linePos) + command.slice(-linePos + 1),
-        cursor: {
-          linePos: state.commandLine.cursor.linePos - 1
-        }
+      command: command.slice(0, -linePos) + command.slice(-linePos + 1),
+      cursor: {
+        linePos: state.commandLine.cursor.linePos - 1
       }
     }
   });

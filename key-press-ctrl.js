@@ -1,4 +1,3 @@
-const { applyPatch } = require("./immutably");
 const { deleteRight, moveCursorLeft } = require("./key-press-actions");
 
 module.exports = {
@@ -9,13 +8,13 @@ module.exports = {
     if (!press.key.ctrl) {
       return state;
     }
-    if (!state.mode.command && press.key.name !== "c") {
+    if (!state.mode().command && press.key.name !== "c") {
       return state;
     }
     return this[press.key.name] ? this[press.key.name](state, press) : state;
   },
   b: state => moveCursorLeft(state, 1),
-  c: state => applyPatch(state, { exit: true }),
+  c: state => state.exit(true),
   d: state => deleteRight(state)
 
   // internal/readline appears to convert these to plain key press

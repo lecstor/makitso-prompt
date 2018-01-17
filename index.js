@@ -10,13 +10,9 @@ const {
 
 const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
 
+const State = require("./state");
 const { applyPatch } = require("./immutably");
-const {
-  updateCursorPos,
-  updateEol,
-  initialState,
-  newMode
-} = require("./state-utils");
+const { updateEol, initialState } = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -34,7 +30,7 @@ function Prompt(options = {}) {
   return {
     input,
     output,
-    state: initialState({ prompt, mode }),
+    state: State(initialState({ prompt, mode, output })),
     keyPressers: [keyPressPlain, keyPressCtrl],
     ioState: {
       input: {
@@ -43,10 +39,6 @@ function Prompt(options = {}) {
         listener: {
           keypress: null
         }
-      },
-      output: {
-        width: output.columns,
-        height: output.rows
       }
     },
     /**
@@ -74,20 +66,22 @@ function Prompt(options = {}) {
 
       this.listenToInput();
 
-      let state = this.state;
-      state = applyPatch(state, {
-        mode: newMode(mode),
-        header,
-        footer,
-        commandLine: {
-          prompt: options.prompt || state.default.prompt,
-          command
-        },
-        secret,
-        default: { command: defaultCommand },
-        returnCommand: false
+      const promptPromise = new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
       });
-      state = applyPatch(state, {
+
+      let state = this.state;
+      const prevState = state.clone();
+
+      state.start(options.prompt);
+      state.mode(mode);
+      state.header(header);
+      state.footer(footer);
+      state.command(command);
+      state.secret(secret);
+      state.defaultCommand(defaultCommand);
+      state.patch({
         commandLine: {
           cursor: { linePos: 0 },
           eol: getEndOfLinePos(
@@ -96,16 +90,38 @@ function Prompt(options = {}) {
           )
         }
       });
-      state = this.startState(state);
-      state = updateCursorPos(state, this.output.columns);
 
-      this.render({ state, prevState: this.state, output: this.output });
-      this.state = state;
+      // state = state.plain;
+      // debug({ state });
+      // state = applyPatch(state, {
+      //   mode: newMode(mode),
+      //   header,
+      //   footer,
+      //   commandLine: {
+      //     prompt: options.prompt || state.default.prompt,
+      //     command
+      //   },
+      //   secret,
+      //   default: { command: defaultCommand },
+      //   returnCommand: false
+      // });
+      // state = applyPatch(state, {
+      //   commandLine: {
+      //     cursor: { linePos: 0 },
+      //     eol: getEndOfLinePos(
+      //       this.output.columns,
+      //       this.renderCommandLine(state)
+      //     )
+      //   }
+      // });
 
-      const promptPromise = new Promise((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
-      });
+      // state = this.startState(state);
+      // state.updateCursorPos();
+      state.updateCursorPos();
+
+      // this.render({ state, prevState: this.state, output: this.output });
+      this.render({ state, prevState, output: this.output });
+      // this.state = state;
 
       await this.onKeyPress("init", { name: "init" });
 
@@ -114,9 +130,8 @@ function Prompt(options = {}) {
 
     processKeyPress: async function(state, press) {
       for (const presser of this.keyPressers) {
-        state = await presser.keyPress(state, press);
+        await presser.keyPress(state, press);
       }
-      return state;
     },
 
     keyPressQueue: [],
@@ -133,50 +148,58 @@ function Prompt(options = {}) {
         [str, key] = this.keyPressQueue.shift();
 
         debug({ keyPress: key });
+        // debug({ state: this.state });
+        // debug({ statePlain: this.state.plain });
+
+        const state = this.state;
+        const prevState = state.clone();
         try {
-          let state = await this.processKeyPress(this.state, { str, key });
-          debug({ state });
-          debug({ header: `"${state.header}"` });
+          await this.processKeyPress(state, {
+            str,
+            key
+          });
+          // debug({ state });
+          // debug({ header: `"${state.header()}"` });
 
-          if (this.commandLineChanged(this.state, state)) {
-            state = updateEol(
-              state,
+          if (this.commandLineChanged(prevState, state)) {
+            state.plain = updateEol(
+              state.plain,
               this.output.columns,
               this.renderCommandLine(state)
             );
-            state = updateCursorPos(state, this.output.columns);
-          } else if (this.cursorMoved(this.state, state)) {
+            state.updateCursorPos();
+          } else if (this.cursorMoved(prevState, state)) {
             debug({ state });
-            state = updateCursorPos(state, this.output.columns);
+            state.updateCursorPos();
           }
 
-          if (state.exit) {
-            state = this.exitState(state);
-          } else if (state.returnCommand) {
-            state = this.returnState(state);
+          if (state.exit()) {
+            state.plain = this.exitState(state.plain);
+          } else if (state.returnCommand()) {
+            state.plain = this.returnState(state.plain);
           }
 
-          if (state.exit || state.returnCommand) {
+          if (state.exit() || state.returnCommand()) {
             this.stopListenToInput();
-            state = updateEol(
-              state,
+            state.plain = updateEol(
+              state.plain,
               this.output.columns,
               this.renderCommandLine(state)
             );
-            state = updateCursorPos(state, this.output.columns);
+            state.updateCursorPos();
           }
 
-          this.render({ state, prevState: this.state, output: this.output });
-          this.state = state;
+          this.render({ state, prevState, output: this.output });
+          // this.state = state;
 
           // if (state.exit || state.returnCommand) {
-          if (state.returnCommand) {
+          if (state.returnCommand()) {
             debug("write newline");
             this.output.write("\r\n");
           }
 
-          if (state.returnCommand) {
-            this.resolve(state.commandLine.command.trim());
+          if (state.returnCommand()) {
+            this.resolve(state.command().trim());
           }
         } catch (error) {
           this.reject(error);
@@ -278,7 +301,7 @@ function Prompt(options = {}) {
      * @returns {Boolean} header changed
      */
     headerChanged(prevState, state) {
-      return state.header !== prevState.header;
+      return state.header() !== prevState.header();
     },
 
     /**
@@ -289,7 +312,7 @@ function Prompt(options = {}) {
      * @returns {Boolean} footer changed
      */
     footerChanged(prevState, state) {
-      return state.footer !== prevState.footer;
+      return state.footer() !== prevState.footer();
     },
 
     /**
@@ -319,7 +342,7 @@ function Prompt(options = {}) {
      */
     cursorMoved(prevState, state) {
       return (
-        prevState.commandLine.cursor !== state.commandLine.cursor ||
+        prevState.cursor() !== state.cursor() ||
         this.commandLineChanged(prevState, state)
       );
     },
@@ -333,10 +356,11 @@ function Prompt(options = {}) {
      */
     renderCommandLine(state) {
       // debug({ renderPromptLine: state });
-      const { prompt } = state.commandLine;
+      const prompt = state.prompt();
       const cmd = this.renderCommand(state);
+      // console.log({ statePlain: state.plain });
       const defaultCmd =
-        state.returnCommand || cmd ? "" : this.renderDefault(state);
+        state.returnCommand() || cmd ? "" : this.renderDefault(state);
       return `${prompt}${defaultCmd}${cmd}`;
     },
 
@@ -348,8 +372,8 @@ function Prompt(options = {}) {
      * @returns {String} command
      */
     renderCommand(state) {
-      const { command } = state.commandLine;
-      if (state.secret) {
+      const command = state.command();
+      if (state.secret()) {
         return "*".repeat(command.length);
       }
       return command;
@@ -362,10 +386,10 @@ function Prompt(options = {}) {
      * @returns {String} default command
      */
     renderDefault(state) {
-      if (!state.default.command) {
+      if (!state.defaultCommand()) {
         return "";
       }
-      return chalk.grey(`[${state.default.command}] `);
+      return chalk.grey(`[${state.defaultCommand()}] `);
     },
 
     /**
@@ -379,17 +403,17 @@ function Prompt(options = {}) {
      */
     render({ state, prevState, output }) {
       // debug({ render: { prevState, state } });
-      // debug({ render: { state } });
+      debug({ render: { state: state.plain } });
 
-      if (state === prevState) {
+      if (state.plain === prevState.plain) {
         return;
       }
 
       if (this.headerChanged(prevState, state)) {
         // debug("header changed");
         let rows = 0;
-        if (prevState.header) {
-          ({ rows } = getEndOfLinePos(this.output.columns, prevState.header));
+        if (prevState.header()) {
+          ({ rows } = getEndOfLinePos(this.output.columns, prevState.header()));
           debug(`clearLinesAbove ${rows + 1}`);
           clearLinesAbove(output, rows + 1);
         }
@@ -398,8 +422,8 @@ function Prompt(options = {}) {
         clearScreenDown(output);
 
         debug("write header");
-        output.write(`${state.header}`);
-        if (state.header.length) {
+        output.write(`${state.header()}`);
+        if (state.header().length) {
           debug("write newline");
           output.write("\r\n");
         }
@@ -410,15 +434,15 @@ function Prompt(options = {}) {
         const renderedCommandLine = this.renderCommandLine(state);
 
         // need to move cursor up to prompt row if the commandline has wrapped
-        if (state.commandLine.cursor.rows > 0) {
+        if (state.cursorRows() > 0) {
           // if the last char on the line is in the last column in the terminal
           // then we need to make room for the next line
-          if (state.commandLine.cursor.cols === 0) {
+          if (state.cursorCols() === 0) {
             debug("write newline");
             output.write("\r\n");
           }
-          debug(`moveCursor 0, ${-state.commandLine.cursor.rows}`);
-          moveCursor(output, 0, -state.commandLine.cursor.rows);
+          debug(`moveCursor 0, ${-state.cursorRows()}`);
+          moveCursor(output, 0, -state.cursorRows());
         }
         cursorTo(output, 0);
         debug("clear screen down");
@@ -426,21 +450,24 @@ function Prompt(options = {}) {
         debug("write prompt");
         output.write(renderedCommandLine);
 
-        if (renderedCommandLine && state.commandLine.cursor.cols === 0) {
+        if (renderedCommandLine && state.cursorCols() === 0) {
           debug("write space");
           output.write(" "); // Force terminal to allocate a new line
         }
       }
 
-      if (state.footer) {
+      if (state.footer()) {
         debug("write newline + footer");
-        output.write("\r\n" + state.footer);
-        const endOfLinePos = getEndOfLinePos(this.output.columns, state.footer);
+        output.write("\r\n" + state.footer());
+        const endOfLinePos = getEndOfLinePos(
+          this.output.columns,
+          state.footer()
+        );
         debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
         moveCursor(output, 0, -(endOfLinePos.rows + 1));
       }
 
-      cursorTo(output, state.commandLine.cursor.cols);
+      cursorTo(output, state.cursorCols());
     },
 
     /**

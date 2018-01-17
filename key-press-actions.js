@@ -1,5 +1,3 @@
-const { applyPatch } = require("./immutably");
-
 const debug = require("./debug");
 
 /**
@@ -11,15 +9,13 @@ const debug = require("./debug");
  */
 function moveCursorLeft(state, places) {
   debug({ moveCursor: { places } });
-  let { linePos } = state.commandLine.cursor;
-  const maxPlaces = state.commandLine.command.length;
+  let linePos = state.cursorLinePos();
+  const maxPlaces = state.command().length;
   let newLinePos = linePos + places;
   if (newLinePos > maxPlaces) {
     newLinePos = maxPlaces;
   }
-  return applyPatch(state, {
-    commandLine: { cursor: { linePos: newLinePos } }
-  });
+  state.cursorLinePos(newLinePos);
 }
 
 /**
@@ -30,47 +26,31 @@ function moveCursorLeft(state, places) {
  * @returns {Object} state
  */
 function moveCursorRight(state, places) {
-  let { linePos } = state.commandLine.cursor;
+  let linePos = state.cursorLinePos();
   if (places > linePos) {
     places = linePos;
   }
-  return applyPatch(state, {
-    commandLine: { cursor: { linePos: linePos - places } }
-  });
+  state.cursorLinePos(linePos - places);
 }
 
 function deleteLeft(state) {
-  const { linePos } = state.commandLine.cursor;
+  const linePos = state.cursorLinePos();
   if (!linePos) {
-    return applyPatch(state, {
-      commandLine: {
-        command: state.commandLine.command.slice(0, -1)
-      }
-    });
+    state.command(state.command().slice(0, -1));
   } else {
-    const { command } = state.commandLine;
-    return applyPatch(state, {
-      commandLine: {
-        command: command.slice(0, -linePos - 1) + command.slice(-linePos)
-      }
-    });
+    const command = state.command();
+    state.command(command.slice(0, -linePos - 1) + command.slice(-linePos));
   }
 }
 
 function deleteRight(state) {
-  const { linePos } = state.commandLine.cursor;
+  const linePos = state.cursorLinePos();
   if (!linePos) {
     return state;
   }
-  const { command } = state.commandLine;
-  return applyPatch(state, {
-    commandLine: {
-      command: command.slice(0, -linePos) + command.slice(-linePos + 1),
-      cursor: {
-        linePos: state.commandLine.cursor.linePos - 1
-      }
-    }
-  });
+  const command = state.command();
+  state.command(command.slice(0, -linePos) + command.slice(-linePos + 1));
+  state.cursorLinePos(state.cursorLinePos() - 1);
 }
 
 module.exports = { deleteLeft, deleteRight, moveCursorLeft, moveCursorRight };

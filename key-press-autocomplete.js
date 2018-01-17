@@ -1,23 +1,18 @@
 const _filter = require("lodash/filter");
-const { applyPatch } = require("./immutably");
 
 function keyPressAutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
       if (state.mode.command) {
-        let { command } = state.commandLine;
+        let command = state.command();
 
         const matches = _filter(choices, choice => choice.startsWith(command));
 
         if (press.key && press.key.name === "tab" && matches.length === 1) {
-          state = applyPatch(state, {
-            commandLine: {
-              command: matches[0] + " ",
-              cursor: { cols: null }
-            }
-          });
+          state.command(matches[0] + " ");
+          state.cursorCols(null);
         } else {
-          state = applyPatch(state, { footer: matches.join(" ") });
+          state.footer(matches.join(" "));
         }
       }
       return state;

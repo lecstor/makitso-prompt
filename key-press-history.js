@@ -1,6 +1,5 @@
 const chalk = require("chalk");
 
-const { applyPatch } = require("./immutably");
 const { newMode } = require("./state-utils");
 
 const keyPressAutoComplete = {
@@ -8,7 +7,7 @@ const keyPressAutoComplete = {
     if (press.key.name === "init") {
       return state;
     }
-    if (state.mode.history) {
+    if (state.mode().history) {
       return this.historyKeyPress(state, press);
     } else if (press.key.name === "up") {
       return this.activateHistory(state);
@@ -31,15 +30,13 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   activateHistory(state) {
-    if (state.history && state.history.commands.length > 1) {
-      state = applyPatch(state, {
-        mode: newMode(state, { history: true }),
-        commandLine: { prompt: this.prompt },
-        history: { index: 0 }
-      });
+    if (state.plain.history && state.plain.history.commands.length > 1) {
+      state.mode("history");
+      state.prompt(this.prompt);
+      state.patch({ history: { index: 0 } });
       return this.pressKey.up(state);
     } else {
-      return applyPatch(state, this.noHistory);
+      return state.patch(this.noHistory);
     }
   },
 
@@ -51,8 +48,8 @@ const keyPressAutoComplete = {
    */
   getHistory(state) {
     let history = [];
-    if (state.history && state.history.commands) {
-      history = state.history.commands.slice(1);
+    if (state.plain.history && state.plain.history.commands) {
+      history = state.plain.history.commands.slice(1);
     }
     return history;
   },
@@ -64,14 +61,14 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   pushHistory(state) {
-    const { command } = state.commandLine;
+    const command = state.command();
     const history = this.getHistory(state);
     if (!command || command === history[0]) {
-      return applyPatch(state, {
+      return state.patch({
         history: { commands: ["", ...history] }
       });
     }
-    return applyPatch(state, {
+    return state.patch({
       history: { commands: ["", command, ...history] }
     });
   },
@@ -83,9 +80,9 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   updateHistory(state) {
-    const { command } = state.commandLine;
+    const command = state.command();
     const history = this.getHistory(state);
-    return applyPatch(state, {
+    return state.patch({
       history: { commands: [command, ...history] }
     });
   },
@@ -117,14 +114,12 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     up(state) {
-      const { index } = state.history || {};
-      if (!state.history.commands[index + 1]) {
+      const { index } = state.plain.history || {};
+      if (!state.plain.history.commands[index + 1]) {
         return state;
       }
-      return applyPatch(state, {
-        commandLine: { command: state.history.commands[index + 1] },
-        history: { index: index + 1 }
-      });
+      state.command(state.plain.history.commands[index + 1]);
+      return state.patch({ history: { index: index + 1 } });
     },
     /**
      * set the command to the next history item
@@ -133,13 +128,13 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     down(state) {
-      const { index } = state.history;
+      const { index } = state.plain.history;
       if (index - 1 === 0) {
         return this.escape(state);
       }
-      return applyPatch(state, {
+      return state.patch({
         commandLine: {
-          command: state.history.commands[index - 1]
+          command: state.plain.history.commands[index - 1]
         },
         history: { index: index - 1 }
       });
@@ -151,11 +146,9 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     return(state) {
-      return applyPatch(state, {
-        mode: newMode(state, state.default.mode),
-        commandLine: { prompt: state.default.prompt },
-        history: { index: 0 }
-      });
+      state.mode(state.defaultMode());
+      state.prompt(state.defaultPrompt());
+      return state.patch({ history: { index: 0 } });
     },
 
     /**
@@ -165,14 +158,10 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     escape(state) {
-      return applyPatch(state, {
-        mode: newMode(state, state.default.mode),
-        commandLine: {
-          prompt: state.default.prompt,
-          command: state.history.commands[0]
-        },
-        history: { index: 0 }
-      });
+      state.mode(state.defaultMode());
+      state.prompt(state.defaultPrompt());
+      state.command(state.plain.history.commands[0]);
+      return state.patch({ history: { index: 0 } });
     }
   }
 };

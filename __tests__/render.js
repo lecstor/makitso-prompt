@@ -1,22 +1,21 @@
 const { newOutput, parseOutput } = require("../test-utils");
 
 const Prompt = require("../index");
-const { applyPatch } = require("../immutably");
+const State = require("../state");
 
 describe("render", () => {
   test("add header to prompt", () => {
     const prompt = Prompt();
-    const prevState = {
+    const prevState = State({
       commandLine: {
         prompt: "Makitso>",
         command: "vpn disconnect foo bar baz",
         cursor: { cols: 24, rows: 0, linePos: 0, col: null }
       },
       footer: "prod sandpit"
-    };
-    const state = applyPatch(prevState, {
-      header: "Enter a connectionName\r\nsome short text"
     });
+    const state = prevState.clone();
+    state.header("Enter a connectionName\r\nsome short text");
     const output = newOutput();
     output.write("Makitso> vpn disconnect foo bar baz");
     prompt.render({ state, prevState, output });

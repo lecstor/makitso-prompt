@@ -1,4 +1,3 @@
-const { applyPatch } = require("./immutably");
 const {
   deleteLeft,
   deleteRight,
@@ -11,7 +10,7 @@ const keyPressPlain = {
     if (press.key.name === "init") {
       return state;
     }
-    if (press.key.ctrl || press.key.meta || !state.mode.command) {
+    if (press.key.ctrl || press.key.meta || !state.mode().command) {
       return state;
     }
     return this[press.key.name]
@@ -24,13 +23,11 @@ const keyPressPlain = {
   escape: state => state,
   left: state => moveCursorLeft(state, 1),
   return: state => {
-    let { command } = state.commandLine;
-    if (command === "" && state.default.command) {
-      state = applyPatch(state, {
-        commandLine: { command: state.default.command }
-      });
+    let command = state.command();
+    if (command === "" && state.defaultCommand()) {
+      state.command(state.defaultCommand());
     }
-    return applyPatch(state, { returnCommand: true });
+    return state.returnCommand(true);
   },
   right: state => moveCursorRight(state, +1),
   tab: state => state,
@@ -40,8 +37,8 @@ const keyPressPlain = {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
-      let { command } = state.commandLine;
-      let { linePos } = state.commandLine.cursor;
+      let command = state.command();
+      let linePos = state.cursorLinePos();
       if (linePos) {
         const start = command.slice(0, -linePos);
         const end = command.slice(-linePos);
@@ -49,12 +46,8 @@ const keyPressPlain = {
       } else {
         command = `${command}${press.str}`;
       }
-      state = applyPatch(state, {
-        commandLine: {
-          command,
-          cursor: { cols: state.commandLine.cursor.cols + 1 }
-        }
-      });
+      state.command(command);
+      state.cursorCols(state.cursorCols() + 1);
     }
     return state;
   }

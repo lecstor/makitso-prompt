@@ -1,6 +1,6 @@
 const _mapValues = require("lodash/mapValues");
+const _isString = require("lodash/isString");
 
-// const { getStringWidth } = require("./readline-funcs");
 const { applyPatch } = require("./immutably");
 const { getEndOfLinePos } = require("./terminal");
 
@@ -46,14 +46,24 @@ const { getEndOfLinePos } = require("./terminal");
  * App state
  * @typedef {Object} State
  * @property {Defaults} default - default prompt and mode
- * @property {Mode} mode - active modes
+ * @property {Modes|String[]} modes - active modes
  * @property {CommandLine} commandLine - everything that makes up the line with the command
  * @property {String} header - line/s printed above the command line
  * @property {String} footer - line/s printed below the command line
  */
 
-function newMode(state, mode) {
-  return Object.assign(_mapValues(state.mode, val => false), mode);
+function newMode(state, modes) {
+  let modeObj = {};
+  if (_isString(modes)) {
+    modeObj[modes] = true;
+  } else if (Array.isArray(modes)) {
+    modes.forEach(mode => {
+      modeObj[mode] = true;
+    });
+  } else {
+    modeObj = modes;
+  }
+  return Object.assign(_mapValues(state.mode, val => false), modeObj);
 }
 
 function updateEol(state, outputWidth, commandLine) {
@@ -87,9 +97,9 @@ function updateCursorPos(state, outputWidth) {
   return applyPatch(state, { commandLine: { cursor } });
 }
 
-function initialState({ prompt, mode }) {
+function initialState({ prompt, mode, output }) {
   return {
-    default: { prompt, mode },
+    defaults: { prompt, mode },
     mode,
     commandLine: {
       prompt: "",
@@ -102,7 +112,9 @@ function initialState({ prompt, mode }) {
       }
     },
     header: "",
-    footer: ""
+    footer: "",
+    columns: output.columns,
+    rows: output.rows
   };
 }
 

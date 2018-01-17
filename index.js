@@ -1,4 +1,3 @@
-const _forEach = require("lodash/forEach");
 const chalk = require("chalk");
 
 const {
@@ -32,15 +31,7 @@ function Prompt(options = {}) {
     output,
     state: State(initialState({ prompt, mode, output })),
     keyPressers: [keyPressPlain, keyPressCtrl],
-    ioState: {
-      input: {
-        pause: true,
-        rawMode: false,
-        listener: {
-          keypress: null
-        }
-      }
-    },
+
     /**
      * start a prompt
      *
@@ -91,37 +82,9 @@ function Prompt(options = {}) {
         }
       });
 
-      // state = state.plain;
-      // debug({ state });
-      // state = applyPatch(state, {
-      //   mode: newMode(mode),
-      //   header,
-      //   footer,
-      //   commandLine: {
-      //     prompt: options.prompt || state.default.prompt,
-      //     command
-      //   },
-      //   secret,
-      //   default: { command: defaultCommand },
-      //   returnCommand: false
-      // });
-      // state = applyPatch(state, {
-      //   commandLine: {
-      //     cursor: { linePos: 0 },
-      //     eol: getEndOfLinePos(
-      //       this.output.columns,
-      //       this.renderCommandLine(state)
-      //     )
-      //   }
-      // });
-
-      // state = this.startState(state);
-      // state.updateCursorPos();
       state.updateCursorPos();
 
-      // this.render({ state, prevState: this.state, output: this.output });
       this.render({ state, prevState, output: this.output });
-      // this.state = state;
 
       await this.onKeyPress("init", { name: "init" });
 
@@ -192,7 +155,6 @@ function Prompt(options = {}) {
           this.render({ state, prevState, output: this.output });
           // this.state = state;
 
-          // if (state.exit || state.returnCommand) {
           if (state.returnCommand()) {
             debug("write newline");
             this.output.write("\r\n");
@@ -244,40 +206,6 @@ function Prompt(options = {}) {
         header: "",
         footer: ""
       });
-    },
-
-    /**
-     * start listening for keyboard input
-     *
-     * @returns {void}
-     */
-    listenToInput() {
-      const inputState = applyPatch(this.ioState.input, {
-        rawMode: true,
-        pause: false,
-        listener: {
-          keypress: (s, k) => {
-            this.onKeyPress(s, k);
-          }
-        }
-      });
-      this.updateInput(inputState);
-      this.ioState.input = inputState;
-    },
-
-    /**
-     * stop listening for keyboard input
-     *
-     * @returns {void}
-     */
-    stopListenToInput() {
-      const inputState = applyPatch(this.ioState.input, {
-        rawMode: false,
-        pause: true,
-        listener: { keypress: null }
-      });
-      this.updateInput(inputState);
-      this.ioState.input = inputState;
     },
 
     /**
@@ -471,41 +399,26 @@ function Prompt(options = {}) {
     },
 
     /**
-     * render the current state to the terminal
+     * start listening for keyboard input
      *
-     * @param {Object} inputState - new state of input
      * @returns {void}
      */
-    updateInput(inputState) {
-      const prevState = this.ioState.input;
-      debug({ prevState, inputState });
-      if (prevState !== inputState) {
-        if (prevState.rawMode !== inputState.rawMode) {
-          debug(`set input raw mode: ${inputState.rawMode}`);
-          this.input.setRawMode(inputState.rawMode);
-        }
-        if (prevState.listener !== inputState.listener) {
-          _forEach(inputState.listener, (val, key) => {
-            if (val !== prevState.listener[key]) {
-              if (val) {
-                debug(`add input listener "${key}"`);
-                this.input.on(key, val);
-              } else {
-                debug(`remove input listener "${key}"`);
-                this.input.removeListener(key, prevState.listener[key]);
-              }
-            }
-          });
-        }
-        if (prevState.pause !== inputState.pause) {
-          debug({ inputPause: inputState.pause });
-          if (inputState.pause) {
-            this.input.pause();
-          } else {
-            this.input.resume();
-          }
-        }
-      }
+    listenToInput() {
+      this.input.setRawMode(true);
+      this.input.resume();
+      this.keypressListener = this.onKeyPress.bind(this);
+      this.input.on("keypress", this.keypressListener);
+    },
+
+    /**
+     * stop listening for keyboard input
+     *
+     * @returns {void}
+     */
+    stopListenToInput() {
+      this.input.setRawMode(false);
+      this.input.pause();
+      this.input.removeListener("keypress", this.keypressListener);
     }
   };
 }

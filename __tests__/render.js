@@ -5,7 +5,8 @@ const State = require("../state");
 
 describe("render", () => {
   test("add header to prompt", () => {
-    const prompt = Prompt();
+    const output = newOutput();
+    const prompt = Prompt({ output });
     const prevState = State({
       commandLine: {
         prompt: "Makitso>",
@@ -16,9 +17,8 @@ describe("render", () => {
     });
     const state = prevState.clone();
     state.header("Enter a connectionName\r\nsome short text");
-    const output = newOutput();
     output.write("Makitso> vpn disconnect foo bar baz");
-    prompt.render({ state, prevState, output });
+    prompt.render({ state, prevState });
     const expected = `Enter a connectionName
 some short text
 Makitso>vpn disconnect foo bar baz

@@ -68,6 +68,13 @@ function State(plain = {}) {
       this.commandLine({ prompt });
     },
 
+    eol(eol) {
+      if (undef(eol)) {
+        return this.plain.commandLine.eol;
+      }
+      this.commandLine({ eol });
+    },
+
     header(header) {
       if (undef(header)) {
         return this.plain.header;
@@ -144,8 +151,8 @@ function State(plain = {}) {
       this.plain = applyPatch(this.plain, { mode: newMode(this.plain, mode) });
     },
 
-    updateCursorPos() {
-      this.plain = updateCursorPos(this.plain, this.plain.columns);
+    updateCursorPos(commandLine) {
+      this.plain = updateCursorPos(this.plain, commandLine);
     },
 
     clone() {

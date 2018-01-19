@@ -10,8 +10,7 @@ const {
 } = require("./render");
 
 const State = require("./state");
-const { applyPatch } = require("./immutably");
-const { updateEol, initialState } = require("./state-utils");
+const { initialState } = require("./state-utils");
 
 const keyPressPlain = require("./key-press-plain");
 const keyPressCtrl = require("./key-press-ctrl");
@@ -65,21 +64,15 @@ function Prompt(options = {}) {
       let state = this.state;
       const prevState = state.clone();
 
-      state.start(options.prompt);
       state.mode(mode);
       state.header(header);
       state.footer(footer);
       state.command(command);
       state.secret(secret);
       state.defaultCommand(defaultCommand);
-      state.cursorLinePos(0);
-      state.patch({
-        commandLine: {
-          eol: getEndOfLinePos(this.output.columns, getCommandLine(state))
-        }
-      });
-
-      state.updateCursorPos();
+      state.start(options.prompt);
+      state.eol(getEndOfLinePos(this.output.columns, getCommandLine(state)));
+      state.updateCursorPos(getCommandLine(state));
 
       this.render({ state, prevState });
 
@@ -108,8 +101,6 @@ function Prompt(options = {}) {
         [str, key] = this.keyPressQueue.shift();
 
         debug({ keyPress: key });
-        // debug({ state: this.state });
-        // debug({ statePlain: this.state.plain });
 
         const state = this.state;
         const prevState = state.clone();
@@ -118,39 +109,26 @@ function Prompt(options = {}) {
             str,
             key
           });
-          // debug({ state });
-          // debug({ header: `"${state.header()}"` });
 
           if (this.commandLineChanged(prevState, state)) {
-            state.plain = updateEol(
-              state.plain,
-              this.output.columns,
-              getCommandLine(state)
-            );
-            state.updateCursorPos();
+            state.updateCursorPos(getCommandLine(state));
           } else if (this.cursorMoved(prevState, state)) {
             debug({ state });
-            state.updateCursorPos();
+            state.updateCursorPos(getCommandLine(state));
           }
 
           if (state.exit()) {
-            state.plain = this.exitState(state.plain);
+            this.exitState(state);
           } else if (state.returnCommand()) {
-            state.plain = this.returnState(state.plain);
+            this.returnState(state);
           }
 
           if (state.exit() || state.returnCommand()) {
             this.stopListenToInput();
-            state.plain = updateEol(
-              state.plain,
-              this.output.columns,
-              getCommandLine(state)
-            );
-            state.updateCursorPos();
+            state.updateCursorPos(getCommandLine(state));
           }
 
           this.render({ state, prevState });
-          // this.state = state;
 
           if (state.returnCommand()) {
             debug("write newline");
@@ -185,11 +163,10 @@ function Prompt(options = {}) {
      * @returns {Object} state
      */
     exitState(state) {
-      return applyPatch(state, {
-        header: "",
-        footer: "",
-        commandLine: { prompt: "", command: "" }
-      });
+      state.header("");
+      state.footer("");
+      state.prompt("");
+      state.command("");
     },
 
     /**
@@ -199,10 +176,8 @@ function Prompt(options = {}) {
      * @returns {Object} state
      */
     returnState(state) {
-      return applyPatch(state, {
-        header: "",
-        footer: ""
-      });
+      state.header("");
+      state.footer("");
     },
 
     /**

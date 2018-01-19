@@ -74,23 +74,23 @@ function updateEol(state, outputWidth, commandLine) {
   });
 }
 
-function updateCursorPos(state, outputWidth) {
+function updateCursorPos(state, commandLine) {
+  const cursor = getEndOfLinePos(state.columns, commandLine);
   const { linePos } = state.commandLine.cursor;
   if (!linePos) {
     return applyPatch(state, {
-      commandLine: { cursor: state.commandLine.eol }
+      commandLine: { cursor }
     });
   }
-  const cursor = { ...state.commandLine.eol };
   if (linePos > state.commandLine.eol.cols) {
     // prompt line is wrapped and cursor is not on last line
     let adjustedLinePos = linePos - cursor.cols;
     cursor.rows--;
-    while (adjustedLinePos > outputWidth) {
-      adjustedLinePos -= outputWidth;
+    while (adjustedLinePos > state.columns) {
+      adjustedLinePos -= state.columns;
       cursor.rows--;
     }
-    cursor.cols = outputWidth - adjustedLinePos;
+    cursor.cols = state.columns - adjustedLinePos;
   } else {
     cursor.cols -= linePos;
   }

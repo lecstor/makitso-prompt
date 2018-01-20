@@ -18,23 +18,35 @@ as key-press processors which modify a state object which is then rendered to
 the terminal. Much of the logic is also broken into easily replaceable functions
 for customisation.
 
+## Usage
+
+### Simple
+
+This will simply echo entered commands
+
 ```js
 const Prompt = require("makitso-prompt");
 const prompt = Prompt();
 const command = prompt.start().then(console.log);
 ```
 
+### Custom prompt
+
 ```js
 const prompt = Prompt({ prompt: chalk`{blue aPrompt> }` });
 const command = prompt.start().then(console.log);
 ```
 
+### Include a header above the prompt and a footer below it
+
 ```js
 const prompt = Prompt();
 const header = "A line above the prompt";
 const footer = "A line below the prompt\nAnother line";
-const command = prompt.start().then(console.log);
+const command = prompt.start({ header, footer }).then(console.log);
 ```
+
+## Add a custom keypress handler
 
 ```js
 const history = require("makitso-prompt/key-press-history");
@@ -42,6 +54,21 @@ const prompt = Prompt();
 Object.assign(prompt, { keyPressers: [...prompt.keyPressers, history] });
 const command = prompt.start().then(console.log);
 ```
+
+### Keypress handlers
+
+A keypress handler is an object with a `keyPress` method.
+
+Keypress handlers `keyPress` methods are called each time a key is pressed.
+
+Keypress handlers are called in the order of the keypressers array.
+
+The `keyPress` method is called with the app `state` object and a `press` object.
+
+Keypress handlers use the `press` and/or `state` objects to decide what, if
+anything, needs to be changed in the `state` object. Changes are made using
+state methods or using the `applyPatch` function from `makitso-prompt/immutably`
+on `state.plain`.
 
 ```js
 const _filter = require("lodash/filter");
@@ -53,19 +80,16 @@ function AutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
       if (state.mode.command) {
-        let command = state.prompt.command.text;
+        let command = state.command();
 
         const matches = _filter(choices, choice => choice.startsWith(command));
 
         if (press.key && press.key.name === "tab" && matches.length === 1) {
-          state = applyPatch(state, {
-            prompt: {
-              command: { text: matches[0] + " " },
-              cursor: { cols: null }
-            }
-          });
+          state.command(matches[0] + " ");
+          state.cursorCols(null);
         } else {
-          state = applyPatch(state, { footer: matches.join(" ") });
+          // state.footer(matches.join(" "));
+          state.plain = applyPatch(state.plain, { footer: matches.join(" ") });
         }
       }
       return state;

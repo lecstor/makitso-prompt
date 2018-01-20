@@ -28,6 +28,8 @@ function waitForKeyPressProcessing(prompt) {
 
 function parseOutput(output, rows) {
   const terminal = new AnsiTerminal(80, (rows = 10), 0);
+  terminal.newline_mode = true;
+
   const parser = new AnsiParser(terminal);
   parser.parse(output);
   return terminal.toString().replace(/\n+$/, "");

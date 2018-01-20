@@ -52,7 +52,7 @@ const { getEndOfLinePos } = require("./terminal");
  * @property {String} footer - line/s printed below the command line
  */
 
-function newMode(state, modes) {
+function newMode(modes) {
   let modeObj = {};
   if (_isString(modes)) {
     modeObj[modes] = true;
@@ -63,15 +63,7 @@ function newMode(state, modes) {
   } else {
     modeObj = modes;
   }
-  return Object.assign(_mapValues(state.mode, val => false), modeObj);
-}
-
-function updateEol(state, outputWidth, commandLine) {
-  return applyPatch(state, {
-    commandLine: {
-      eol: getEndOfLinePos(outputWidth, commandLine)
-    }
-  });
+  return modeObj;
 }
 
 function updateCursorPos(state, commandLine) {
@@ -121,6 +113,5 @@ function initialState({ prompt, mode, output }) {
 module.exports = {
   newMode,
   updateCursorPos,
-  updateEol,
   initialState
 };

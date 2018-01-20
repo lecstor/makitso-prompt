@@ -7,6 +7,31 @@ const { newOutput, getResult } = require("../../test-utils");
 const promptText = "test> ";
 
 describe("Integration", () => {
+  test("use defaults", async () => {
+    const prompt = Prompt();
+    const promptP = prompt.start();
+    const expected = {
+      columns: 86,
+      commandLine: {
+        command: "",
+        cursor: { cols: 9, linePos: 0, rows: 0 },
+        eol: { cols: 9, rows: 0 },
+        prompt: "makitso> "
+      },
+      defaults: { command: "", mode: { command: true }, prompt: "makitso> " },
+      footer: "",
+      header: "",
+      mode: { command: true },
+      returnCommand: false,
+      rows: 57,
+      secret: false
+    };
+    expect(prompt.state.plain).toEqual(expected);
+
+    input.send("\x0D");
+    return promptP;
+  });
+
   test("set prompt at instantiation", async () => {
     const output = newOutput();
     const prompt = Prompt({ input, output, prompt: promptText });

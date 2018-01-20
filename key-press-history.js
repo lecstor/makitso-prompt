@@ -1,7 +1,5 @@
 const chalk = require("chalk");
 
-const { newMode } = require("./state-utils");
-
 const keyPressAutoComplete = {
   keyPress(state, press) {
     if (press.key.name === "init") {

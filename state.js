@@ -148,7 +148,7 @@ function State(plain = {}) {
       if (undef(mode)) {
         return this.plain.mode;
       }
-      this.plain = applyPatch(this.plain, { mode: newMode(this.plain, mode) });
+      this.plain = applyPatch(this.plain, { mode: newMode(mode) });
     },
 
     updateCursorPos(commandLine) {

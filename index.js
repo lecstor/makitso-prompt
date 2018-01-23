@@ -39,7 +39,10 @@ function Prompt(options = {}) {
      * @param {Object} [options.mode] - the mode/s to activate
      * @param {String} [options.header=""] - lines to put above prompt
      * @param {String} [options.footer=""] - lines to put below prompt
-     * @param {Boolean} [options.secret] - when true the commandline input will be masked
+     * @param {Boolean|String} [options.maskInput] - when truthy the commandline
+     *        input will be masked. If maskInput is a string then it will be used
+     *        for the mask, otherwise "*"s will be used (the mask will be repeated
+     *        for each character of input.)
      * @returns {Promise} resolves to the entered command
      */
     start: async function(options = {}) {
@@ -47,7 +50,7 @@ function Prompt(options = {}) {
         mode = { command: true },
         header = "",
         footer = "",
-        secret = false,
+        maskInput = false,
         default: defaultCommand = "",
         command = ""
       } = options;
@@ -68,7 +71,7 @@ function Prompt(options = {}) {
       state.header(header);
       state.footer(footer);
       state.command(command);
-      state.secret(secret);
+      state.maskInput(maskInput);
       state.defaultCommand(defaultCommand);
       state.start(options.prompt);
       state.eol(getEndOfLinePos(this.output.columns, getCommandLine(state)));

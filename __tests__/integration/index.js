@@ -24,7 +24,7 @@ describe("Integration", () => {
       mode: { command: true },
       returnCommand: false,
       rows: 57,
-      secret: false
+      maskInput: false
     };
     expect(prompt.state.plain).toEqual(expected);
 

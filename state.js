@@ -117,11 +117,11 @@ function State(plain = {}) {
       this.cursor({ linePos });
     },
 
-    secret(secret) {
-      if (undef(secret)) {
-        return this.plain.secret;
+    maskInput(maskInput) {
+      if (undef(maskInput)) {
+        return this.plain.maskInput;
       }
-      this.plain.secret = secret;
+      this.plain.maskInput = maskInput;
     },
 
     exit(exit) {

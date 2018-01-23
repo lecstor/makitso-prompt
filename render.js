@@ -24,15 +24,19 @@ function getCommandLine(state) {
 
 /**
  * returns a string to be displayed as the current command
- * - if state.secret is true then the command will be masked (eg for password input)
+ * - if state.maskInput is true then the command will be masked (eg for password input)
  *
  * @param {Object} state - current state
  * @returns {String} command
  */
 function renderCommand(state) {
   const command = state.command();
-  if (state.secret()) {
-    return "*".repeat(command.length);
+  const mask = state.maskInput();
+  if (mask) {
+    if (mask === true) {
+      return "*".repeat(command.length);
+    }
+    return mask.repeat(command.length);
   }
   return command;
 }

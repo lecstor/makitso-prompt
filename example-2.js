@@ -28,9 +28,9 @@ function newPrompt() {
     .then(command => console.log(`received: "${command}"`))
     .then(() =>
       prompt.start({
-        header: "Can be a secret",
+        header: "Input can be masked",
         prompt: "thePrompt> ",
-        secret: true
+        maskInput: true
       })
     )
     .then(command => console.log(`received: "${command}"`))

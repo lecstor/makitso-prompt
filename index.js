@@ -79,7 +79,7 @@ function Prompt(options = {}) {
 
       this.render({ state, prevState });
 
-      await this.onKeyPress("init", { name: "init" });
+      this.onKeyPress("init", { name: "init" });
 
       return promptPromise;
     },
@@ -100,14 +100,15 @@ function Prompt(options = {}) {
       }
       this.keyPressQueueProcessing = true;
 
-      while (this.keyPressQueue.length) {
-        [str, key] = this.keyPressQueue.shift();
+      try {
+        while (this.keyPressQueue.length) {
+          [str, key] = this.keyPressQueue.shift();
 
-        debug({ keyPress: key });
+          debug({ keyPress: key });
 
-        const state = this.state;
-        const prevState = state.clone();
-        try {
+          const state = this.state;
+          const prevState = state.clone();
+
           await this.processKeyPress(state, {
             str,
             key
@@ -141,11 +142,12 @@ function Prompt(options = {}) {
           if (state.returnCommand()) {
             this.resolve(state.command().trim());
           }
-        } catch (error) {
-          this.reject(error);
         }
+        this.keyPressQueueProcessing = false;
+      } catch (error) {
+        this.stopListenToInput();
+        this.reject(error);
       }
-      this.keyPressQueueProcessing = false;
     },
 
     /**

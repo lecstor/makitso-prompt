@@ -9,13 +9,13 @@ const debug = require("./debug");
  */
 function moveCursorLeft(state, places) {
   debug({ moveCursor: { places } });
-  let linePos = state.cursorLinePos();
-  const maxPlaces = state.command().length;
+  let linePos = state.cursorLinePos;
+  const maxPlaces = state.command.length;
   let newLinePos = linePos + places;
   if (newLinePos > maxPlaces) {
     newLinePos = maxPlaces;
   }
-  state.cursorLinePos(newLinePos);
+  state.cursorLinePos = newLinePos;
 }
 
 /**
@@ -26,31 +26,31 @@ function moveCursorLeft(state, places) {
  * @returns {Object} state
  */
 function moveCursorRight(state, places) {
-  let linePos = state.cursorLinePos();
+  let linePos = state.cursorLinePos;
   if (places > linePos) {
     places = linePos;
   }
-  state.cursorLinePos(linePos - places);
+  state.cursorLinePos = linePos - places;
 }
 
 function deleteLeft(state) {
-  const linePos = state.cursorLinePos();
+  const linePos = state.cursorLinePos;
   if (!linePos) {
-    state.command(state.command().slice(0, -1));
+    state.command = state.command.slice(0, -1);
   } else {
-    const command = state.command();
-    state.command(command.slice(0, -linePos - 1) + command.slice(-linePos));
+    const command = state.command;
+    state.command = command.slice(0, -linePos - 1) + command.slice(-linePos);
   }
 }
 
 function deleteRight(state) {
-  const linePos = state.cursorLinePos();
+  const linePos = state.cursorLinePos;
   if (!linePos) {
     return state;
   }
-  const command = state.command();
-  state.command(command.slice(0, -linePos) + command.slice(-linePos + 1));
-  state.cursorLinePos(state.cursorLinePos() - 1);
+  const command = state.command;
+  state.command = command.slice(0, -linePos) + command.slice(-linePos + 1);
+  state.cursorLinePos = state.cursorLinePos - 1;
 }
 
 module.exports = { deleteLeft, deleteRight, moveCursorLeft, moveCursorRight };

@@ -30,7 +30,7 @@ const keyPressAutoComplete = {
   activateHistory(state) {
     if (state.plain.history && state.plain.history.commands.length > 1) {
       state.mode = "history";
-      state.prompt(this.prompt);
+      state.prompt = this.prompt;
       state.patch({ history: { index: 0 } });
       return this.pressKey.up(state);
     } else {
@@ -59,15 +59,14 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   pushHistory(state) {
-    const command = state.command();
     const history = this.getHistory(state);
-    if (!command || command === history[0]) {
+    if (!state.command || state.command === history[0]) {
       return state.patch({
         history: { commands: ["", ...history] }
       });
     }
     return state.patch({
-      history: { commands: ["", command, ...history] }
+      history: { commands: ["", state.command, ...history] }
     });
   },
 
@@ -78,10 +77,9 @@ const keyPressAutoComplete = {
    * @returns {Object} state
    */
   updateHistory(state) {
-    const command = state.command();
     const history = this.getHistory(state);
     return state.patch({
-      history: { commands: [command, ...history] }
+      history: { commands: [state.command, ...history] }
     });
   },
 
@@ -116,7 +114,7 @@ const keyPressAutoComplete = {
       if (!state.plain.history.commands[index + 1]) {
         return state;
       }
-      state.command(state.plain.history.commands[index + 1]);
+      state.command = state.plain.history.commands[index + 1];
       return state.patch({ history: { index: index + 1 } });
     },
     /**
@@ -144,8 +142,8 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     return(state) {
-      state.mode = state.defaultMode();
-      state.prompt(state.defaultPrompt());
+      state.mode = state.defaultMode;
+      state.prompt = state.defaultPrompt;
       return state.patch({ history: { index: 0 } });
     },
 
@@ -156,9 +154,9 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     escape(state) {
-      state.mode = state.defaultMode();
-      state.prompt(state.defaultPrompt());
-      state.command(state.plain.history.commands[0]);
+      state.mode = state.defaultMode;
+      state.prompt = state.defaultPrompt;
+      state.command = state.plain.history.commands[0];
       return state.patch({ history: { index: 0 } });
     }
   }

@@ -13,7 +13,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorLeft(state, 2);
-        expect(state.cursorLinePos()).toEqual(0);
+        expect(state.cursorLinePos).toEqual(0);
       });
 
       test("moves cursor to prompt", () => {
@@ -24,7 +24,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorLeft(state, 6);
-        expect(state.cursorLinePos()).toEqual(3);
+        expect(state.cursorLinePos).toEqual(3);
       });
 
       test("moves cursor", () => {
@@ -35,7 +35,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorLeft(state, 2);
-        expect(state.cursorLinePos()).toEqual(2);
+        expect(state.cursorLinePos).toEqual(2);
       });
     });
 
@@ -48,7 +48,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorRight(state, 2);
-        expect(state.cursorLinePos()).toBe(0);
+        expect(state.cursorLinePos).toBe(0);
       });
 
       test("moves cursor", () => {
@@ -59,7 +59,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorRight(state, 2);
-        expect(state.cursorLinePos()).toEqual(1);
+        expect(state.cursorLinePos).toEqual(1);
       });
 
       test("moves cursor to end", () => {
@@ -70,7 +70,7 @@ describe("key-press-actions", () => {
           }
         });
         moveCursorRight(state, 5);
-        expect(state.cursorLinePos()).toEqual(0);
+        expect(state.cursorLinePos).toEqual(0);
       });
     });
   });

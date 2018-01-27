@@ -14,7 +14,7 @@ module.exports = {
     return this[press.key.name] ? this[press.key.name](state, press) : state;
   },
   b: state => moveCursorLeft(state, 1),
-  c: state => state.exit(true),
+  c: state => (state.exit = true),
   d: state => deleteRight(state)
 
   // internal/readline appears to convert these to plain key press

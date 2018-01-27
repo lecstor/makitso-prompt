@@ -12,13 +12,13 @@ Object.assign(prompt, {
     {
       keyPress(state, press) {
         if (press.key.name === "init") {
-          state.header("two line\nheader");
-          state.footer("two line\nfooter");
+          state.header = "two line\nheader";
+          state.footer = "two line\nfooter";
           return state;
         }
         if (press.key.name === "h") {
-          state.header("one line header");
-          state.footer("one line footer");
+          state.header = "one line header";
+          state.footer = "one line footer";
           return state;
         }
       }

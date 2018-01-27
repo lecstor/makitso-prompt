@@ -52,20 +52,6 @@ const { getEndOfLinePos } = require("./terminal");
  * @property {String} footer - line/s printed below the command line
  */
 
-function newMode(modes) {
-  let modeObj = {};
-  if (_isString(modes)) {
-    modeObj[modes] = true;
-  } else if (Array.isArray(modes)) {
-    modes.forEach(mode => {
-      modeObj[mode] = true;
-    });
-  } else {
-    modeObj = modes;
-  }
-  return modeObj;
-}
-
 function updateCursorPos(state, commandLine) {
   const cursor = getEndOfLinePos(state.columns, commandLine);
   const { linePos } = state.commandLine.cursor;
@@ -111,7 +97,6 @@ function initialState({ prompt, mode, output }) {
 }
 
 module.exports = {
-  newMode,
   updateCursorPos,
   initialState
 };

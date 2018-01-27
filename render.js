@@ -14,11 +14,11 @@ const debug = require("./debug");
  */
 function getCommandLine(state) {
   // debug({ renderPromptLine: state });
-  const prompt = state.prompt();
+  const prompt = state.prompt;
   const cmd = renderCommand(state);
   // console.log({ statePlain: state.plain });
   const defaultCmd =
-    state.returnCommand() || cmd ? "" : renderDefaultCommand(state);
+    state.returnCommand || cmd ? "" : renderDefaultCommand(state);
   return `${prompt}${defaultCmd}${cmd}`;
 }
 
@@ -30,8 +30,8 @@ function getCommandLine(state) {
  * @returns {String} command
  */
 function renderCommand(state) {
-  const command = state.command();
-  const mask = state.maskInput();
+  const command = state.command;
+  const mask = state.maskInput;
   if (mask) {
     if (mask === true) {
       return "*".repeat(command.length);
@@ -48,16 +48,16 @@ function renderCommand(state) {
  * @returns {String} default command
  */
 function renderDefaultCommand(state) {
-  if (!state.defaultCommand()) {
+  if (!state.defaultCommand) {
     return "";
   }
-  return chalk.grey(`[${state.defaultCommand()}] `);
+  return chalk.grey(`[${state.defaultCommand}] `);
 }
 
 function renderHeader(prevState, state, output) {
   let rows = 0;
-  if (prevState.header()) {
-    ({ rows } = getEndOfLinePos(output.columns, prevState.header()));
+  if (prevState.header) {
+    ({ rows } = getEndOfLinePos(output.columns, prevState.header));
     debug(`clearLinesAbove ${rows + 1}`);
     clearLinesAbove(output, rows + 1);
   }
@@ -66,8 +66,8 @@ function renderHeader(prevState, state, output) {
   clearScreenDown(output);
 
   debug("write header");
-  output.write(`${state.header()}`);
-  if (state.header().length) {
+  output.write(`${state.header}`);
+  if (state.header.length) {
     debug("write newline");
     output.write("\r\n");
   }
@@ -77,15 +77,15 @@ function renderCommandLine(state, output) {
   const commandLine = getCommandLine(state);
 
   // need to move cursor up to prompt row if the commandline has wrapped
-  if (state.cursorRows() > 0) {
+  if (state.cursorRows > 0) {
     // if the last char on the line is in the last column in the terminal
     // then we need to make room for the next line
-    if (state.cursorCols() === 0) {
+    if (state.cursorCols === 0) {
       debug("write newline");
       output.write("\r\n");
     }
-    debug(`moveCursor 0, ${-state.cursorRows()}`);
-    moveCursor(output, 0, -state.cursorRows());
+    debug(`moveCursor 0, ${-state.cursorRows}`);
+    moveCursor(output, 0, -state.cursorRows);
   }
   cursorTo(output, 0);
   debug("clear screen down");
@@ -93,7 +93,7 @@ function renderCommandLine(state, output) {
   debug("write prompt");
   output.write(commandLine);
 
-  if (commandLine && state.cursorCols() === 0) {
+  if (commandLine && state.cursorCols === 0) {
     debug("write space");
     output.write(" "); // Force terminal to allocate a new line
   }
@@ -101,8 +101,8 @@ function renderCommandLine(state, output) {
 
 function renderFooter(state, output) {
   debug("write newline + footer");
-  output.write("\r\n" + state.footer());
-  const endOfLinePos = getEndOfLinePos(output.columns, state.footer());
+  output.write("\r\n" + state.footer);
+  const endOfLinePos = getEndOfLinePos(output.columns, state.footer);
   debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
   moveCursor(output, 0, -(endOfLinePos.rows + 1));
 }

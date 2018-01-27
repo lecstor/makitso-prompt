@@ -1,5 +1,5 @@
 const { applyPatch } = require("./immutably");
-const { newMode, updateCursorPos } = require("./state-utils");
+const { updateCursorPos } = require("./state-utils");
 
 function undef(value) {
   return value === undefined;
@@ -10,9 +10,9 @@ function State(plain = {}) {
     plain,
 
     start(prompt) {
-      this.prompt(prompt || this.defaultPrompt());
-      this.cursorLinePos(0);
-      this.returnCommand(false);
+      this.prompt = prompt || this.defaultPrompt;
+      this.cursorLinePos = 0;
+      this.returnCommand = false;
     },
 
     patch(patch) {
@@ -33,38 +33,53 @@ function State(plain = {}) {
       this.plain = applyPatch(this.plain, { defaults });
     },
 
-    defaultCommand(command) {
-      if (undef(command)) {
-        return this.plain.defaults.command;
-      }
+    /**
+     * @type {String}
+     */
+    get defaultCommand() {
+      return this.plain.defaults.command;
+    },
+    set defaultCommand(command) {
       this.defaults({ command });
     },
 
-    defaultPrompt(prompt) {
-      if (undef(prompt)) {
-        return this.plain.defaults.prompt;
-      }
+    /**
+     * @type {String}
+     */
+    get defaultPrompt() {
+      return this.plain.defaults.prompt;
+    },
+    set defaultPrompt(prompt) {
       this.defaults({ prompt });
     },
 
-    defaultMode(mode) {
-      if (undef(mode)) {
-        return this.plain.defaults.mode;
-      }
+    /**
+     * @type {String}
+     */
+    get defaultMode() {
+      return this.plain.defaults.mode;
+    },
+    set defaultMode(mode) {
       this.defaults({ mode });
     },
 
-    command(command) {
-      if (undef(command)) {
-        return this.plain.commandLine.command;
-      }
+    /**
+     * @type {String}
+     */
+    get command() {
+      return this.plain.commandLine.command;
+    },
+    set command(command) {
       this.commandLine({ command });
     },
 
-    prompt(prompt) {
-      if (undef(prompt)) {
-        return this.plain.commandLine.prompt;
-      }
+    /**
+     * @type {String}
+     */
+    get prompt() {
+      return this.plain.commandLine.prompt;
+    },
+    set prompt(prompt) {
       this.commandLine({ prompt });
     },
 
@@ -75,17 +90,23 @@ function State(plain = {}) {
       this.commandLine({ eol });
     },
 
-    header(header) {
-      if (undef(header)) {
-        return this.plain.header;
-      }
+    /**
+     * @type {String}
+     */
+    get header() {
+      return this.plain.header;
+    },
+    set header(header) {
       this.plain = applyPatch(this.plain, { header });
     },
 
-    footer(footer) {
-      if (undef(footer)) {
-        return this.plain.footer;
-      }
+    /**
+     * @type {String}
+     */
+    get footer() {
+      return this.plain.footer;
+    },
+    set footer(footer) {
       this.plain = applyPatch(this.plain, { footer });
     },
 
@@ -96,63 +117,72 @@ function State(plain = {}) {
       this.commandLine({ cursor });
     },
 
-    cursorCols(cols) {
-      if (undef(cols)) {
-        return this.plain.commandLine.cursor.cols;
-      }
+    /**
+     * @type {Number}
+     */
+    get cursorCols() {
+      return this.plain.commandLine.cursor.cols;
+    },
+    set cursorCols(cols) {
       this.cursor({ cols });
     },
 
-    cursorRows(rows) {
-      if (undef(rows)) {
-        return this.plain.commandLine.cursor.rows;
-      }
+    /**
+     * @type {Number}
+     */
+    get cursorRows() {
+      return this.plain.commandLine.cursor.rows;
+    },
+    set cursorRows(rows) {
       this.cursor({ rows });
     },
 
-    cursorLinePos(linePos) {
-      if (undef(linePos)) {
-        return this.plain.commandLine.cursor.linePos;
-      }
+    /**
+     * @type {Number}
+     */
+    get cursorLinePos() {
+      return this.plain.commandLine.cursor.linePos;
+    },
+    set cursorLinePos(linePos) {
       this.cursor({ linePos });
     },
 
-    maskInput(maskInput) {
-      if (undef(maskInput)) {
-        return this.plain.maskInput;
-      }
+    /**
+     * @type {Boolean}
+     */
+    get maskInput() {
+      return this.plain.maskInput;
+    },
+    set maskInput(maskInput) {
       this.plain.maskInput = maskInput;
     },
 
-    exit(exit) {
-      if (undef(exit)) {
-        return this.plain.exit;
-      }
+    /**
+     * @type {Boolean}
+     */
+    get exit() {
+      return this.plain.exit;
+    },
+    set exit(exit) {
       this.plain.exit = exit;
     },
 
-    returnCommand(returnCommand) {
-      if (undef(returnCommand)) {
-        return this.plain.returnCommand;
-      }
+    /**
+     * @type {Boolean}
+     */
+    get returnCommand() {
+      return this.plain.returnCommand;
+    },
+    set returnCommand(returnCommand) {
       this.plain.returnCommand = returnCommand;
     },
 
     /**
-     * get current mode
-     *
-     * @returns {String} mode
+     * @type {String}
      */
     get mode() {
       return this.plain.mode;
     },
-
-    /**
-     * set current mode
-     *
-     * @param {String} mode -
-     * @returns {void}
-     */
     set mode(mode) {
       this.plain = applyPatch(this.plain, { mode });
     },

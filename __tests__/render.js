@@ -16,7 +16,7 @@ describe("render", () => {
       footer: "prod sandpit"
     });
     const state = prevState.clone();
-    state.header("Enter a connectionName\r\nsome short text");
+    state.header = "Enter a connectionName\r\nsome short text";
     output.write("Makitso> vpn disconnect foo bar baz");
     prompt.render({ state, prevState });
     const expected = `Enter a connectionName

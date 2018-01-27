@@ -9,27 +9,27 @@ describe("state", () => {
 
   test("command", () => {
     const state = State();
-    state.command("hello");
+    state.command = "hello";
     expect(state.plain).toEqual({ commandLine: { command: "hello" } });
-    expect(state.command()).toEqual("hello");
+    expect(state.command).toEqual("hello");
   });
 
   test("prompt", () => {
     const state = State();
-    state.prompt("hello");
+    state.prompt = "hello";
     expect(state.plain).toEqual({ commandLine: { prompt: "hello" } });
-    expect(state.prompt()).toEqual("hello");
+    expect(state.prompt).toEqual("hello");
   });
 
   test("header", () => {
     const state = State();
-    state.header("hello");
+    state.header = "hello";
     expect(state.plain).toEqual({ header: "hello" });
   });
 
   test("footer", () => {
     const state = State();
-    state.footer("hello");
+    state.footer = "hello";
     expect(state.plain).toEqual({ footer: "hello" });
   });
 
@@ -41,7 +41,7 @@ describe("state", () => {
 
   test("cursorCols", () => {
     const state = State();
-    state.cursorCols(3);
+    state.cursorCols = 3;
     expect(state.plain).toEqual({ commandLine: { cursor: { cols: 3 } } });
   });
 });

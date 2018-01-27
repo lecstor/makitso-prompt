@@ -23,11 +23,11 @@ const keyPressPlain = {
   escape: state => state,
   left: state => moveCursorLeft(state, 1),
   return: state => {
-    let command = state.command();
-    if (command === "" && state.defaultCommand()) {
-      state.command(state.defaultCommand());
+    let command = state.command;
+    if (command === "" && state.defaultCommand) {
+      state.command = state.defaultCommand;
     }
-    return state.returnCommand(true);
+    return (state.returnCommand = true);
   },
   right: state => moveCursorRight(state, +1),
   tab: state => state,
@@ -37,8 +37,8 @@ const keyPressPlain = {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
-      let command = state.command();
-      let linePos = state.cursorLinePos();
+      let command = state.command;
+      let linePos = state.cursorLinePos;
       if (linePos) {
         const start = command.slice(0, -linePos);
         const end = command.slice(-linePos);
@@ -46,8 +46,8 @@ const keyPressPlain = {
       } else {
         command = `${command}${press.str}`;
       }
-      state.command(command);
-      state.cursorCols(state.cursorCols() + 1);
+      state.command = command;
+      state.cursorCols = state.cursorCols + 1;
     }
     return state;
   }

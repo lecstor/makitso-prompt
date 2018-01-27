@@ -68,11 +68,11 @@ function Prompt(options = {}) {
       const prevState = state.clone();
 
       state.mode = mode;
-      state.header(header);
-      state.footer(footer);
-      state.command(command);
-      state.maskInput(maskInput);
-      state.defaultCommand(defaultCommand);
+      state.header = header;
+      state.footer = footer;
+      state.command = command;
+      state.maskInput = maskInput;
+      state.defaultCommand = defaultCommand;
       state.start(options.prompt);
       state.eol(getEndOfLinePos(this.output.columns, getCommandLine(state)));
       state.updateCursorPos(getCommandLine(state));
@@ -121,26 +121,26 @@ function Prompt(options = {}) {
             state.updateCursorPos(getCommandLine(state));
           }
 
-          if (state.exit()) {
+          if (state.exit) {
             this.exitState(state);
-          } else if (state.returnCommand()) {
+          } else if (state.returnCommand) {
             this.returnState(state);
           }
 
-          if (state.exit() || state.returnCommand()) {
+          if (state.exit || state.returnCommand) {
             this.stopListenToInput();
             state.updateCursorPos(getCommandLine(state));
           }
 
           this.render({ state, prevState });
 
-          if (state.returnCommand()) {
+          if (state.returnCommand) {
             debug("write newline");
             this.output.write("\r\n");
           }
 
-          if (state.returnCommand()) {
-            this.resolve(state.command().trim());
+          if (state.returnCommand) {
+            this.resolve(state.command.trim());
           }
         }
         this.keyPressQueueProcessing = false;
@@ -168,10 +168,10 @@ function Prompt(options = {}) {
      * @returns {Object} state
      */
     exitState(state) {
-      state.header("");
-      state.footer("");
-      state.prompt("");
-      state.command("");
+      state.header = "";
+      state.footer = "";
+      state.prompt = "";
+      state.command = "";
     },
 
     /**
@@ -181,8 +181,8 @@ function Prompt(options = {}) {
      * @returns {Object} state
      */
     returnState(state) {
-      state.header("");
-      state.footer("");
+      state.header = "";
+      state.footer = "";
     },
 
     /**
@@ -206,7 +206,7 @@ function Prompt(options = {}) {
      * @returns {Boolean} header changed
      */
     headerChanged(prevState, state) {
-      return state.header() !== prevState.header();
+      return state.header !== prevState.header;
     },
 
     /**
@@ -217,7 +217,7 @@ function Prompt(options = {}) {
      * @returns {Boolean} footer changed
      */
     footerChanged(prevState, state) {
-      return state.footer() !== prevState.footer();
+      return state.footer !== prevState.footer;
     },
 
     /**
@@ -276,11 +276,11 @@ function Prompt(options = {}) {
         renderCommandLine(state, this.output);
       }
 
-      if (state.footer()) {
+      if (state.footer) {
         renderFooter(state, this.output);
       }
 
-      cursorTo(output, state.cursorCols());
+      cursorTo(output, state.cursorCols);
     },
 
     /**

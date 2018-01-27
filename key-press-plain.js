@@ -10,7 +10,7 @@ const keyPressPlain = {
     if (press.key.name === "init") {
       return state;
     }
-    if (press.key.ctrl || press.key.meta || !state.mode().command) {
+    if (press.key.ctrl || press.key.meta || state.mode !== "command") {
       return state;
     }
     return this[press.key.name]

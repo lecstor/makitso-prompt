@@ -139,17 +139,22 @@ function State(plain = {}) {
     },
 
     /**
-     * clear current modes and set new ones
+     * get current mode
      *
-     * @param {Object|Array} mode -
+     * @returns {String} mode
+     */
+    get mode() {
+      return this.plain.mode;
+    },
+
+    /**
+     * set current mode
+     *
+     * @param {String} mode -
      * @returns {void}
      */
-    mode(mode) {
-      if (undef(mode)) {
-        return this.plain.mode;
-      }
-      this.plain = applyPatch(this.plain, { mode: null });
-      this.plain = applyPatch(this.plain, { mode: newMode(mode) });
+    set mode(mode) {
+      this.plain = applyPatch(this.plain, { mode });
     },
 
     updateCursorPos(commandLine) {

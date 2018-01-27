@@ -5,7 +5,7 @@ const keyPressAutoComplete = {
     if (press.key.name === "init") {
       return state;
     }
-    if (state.mode().history) {
+    if (state.mode === "history") {
       return this.historyKeyPress(state, press);
     } else if (press.key.name === "up") {
       return this.activateHistory(state);
@@ -29,7 +29,7 @@ const keyPressAutoComplete = {
    */
   activateHistory(state) {
     if (state.plain.history && state.plain.history.commands.length > 1) {
-      state.mode("history");
+      state.mode = "history";
       state.prompt(this.prompt);
       state.patch({ history: { index: 0 } });
       return this.pressKey.up(state);
@@ -144,7 +144,7 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     return(state) {
-      state.mode(state.defaultMode());
+      state.mode = state.defaultMode();
       state.prompt(state.defaultPrompt());
       return state.patch({ history: { index: 0 } });
     },
@@ -156,7 +156,7 @@ const keyPressAutoComplete = {
      * @returns {Object} state
      */
     escape(state) {
-      state.mode(state.defaultMode());
+      state.mode = state.defaultMode();
       state.prompt(state.defaultPrompt());
       state.command(state.plain.history.commands[0]);
       return state.patch({ history: { index: 0 } });

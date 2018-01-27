@@ -3,7 +3,7 @@ const _filter = require("lodash/filter");
 function keyPressAutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
-      if (state.mode.command) {
+      if (state.mode === "command") {
         let command = state.command();
 
         const matches = _filter(choices, choice => choice.startsWith(command));

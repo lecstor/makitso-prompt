@@ -79,7 +79,7 @@ const { applyPatch } = require("makitso-prompt/immutably");
 function AutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
-      if (state.mode.command) {
+      if (state.mode === "command") {
         let command = state.command();
 
         const matches = _filter(choices, choice => choice.startsWith(command));

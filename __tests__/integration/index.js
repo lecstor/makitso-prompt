@@ -18,10 +18,10 @@ describe("Integration", () => {
         eol: { cols: 9, rows: 0 },
         prompt: "makitso> "
       },
-      defaults: { command: "", mode: { command: true }, prompt: "makitso> " },
+      defaults: { command: "", mode: "command", prompt: "makitso> " },
       footer: "",
       header: "",
-      mode: { command: true },
+      mode: "command",
       returnCommand: false,
       rows: 57,
       maskInput: false

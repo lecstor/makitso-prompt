@@ -20,7 +20,7 @@ const debug = require("./debug");
 function Prompt(options = {}) {
   const {
     prompt = "makitso> ",
-    mode = { command: true },
+    mode = "command",
     input = process.stdin,
     output = process.stdout
   } = options;
@@ -36,7 +36,7 @@ function Prompt(options = {}) {
      *
      * @param {Object} options -
      * @param {String} [options.prompt] - the prompt to use for the input line
-     * @param {Object} [options.mode] - the mode/s to activate
+     * @param {String} [options.mode] - the mode to activate
      * @param {String} [options.header=""] - lines to put above prompt
      * @param {String} [options.footer=""] - lines to put below prompt
      * @param {Boolean|String} [options.maskInput] - when truthy the commandline
@@ -47,7 +47,7 @@ function Prompt(options = {}) {
      */
     start: async function(options = {}) {
       const {
-        mode = { command: true },
+        mode = "command",
         header = "",
         footer = "",
         maskInput = false,
@@ -67,7 +67,7 @@ function Prompt(options = {}) {
       let state = this.state;
       const prevState = state.clone();
 
-      state.mode(mode);
+      state.mode = mode;
       state.header(header);
       state.footer(footer);
       state.command(command);

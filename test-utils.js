@@ -1,10 +1,13 @@
 const { Writable } = require("stream");
 
-var AnsiTerminal = require("node-ansiterminal").AnsiTerminal;
-var AnsiParser = require("node-ansiparser");
+const AnsiTerminal = require("node-ansiterminal").AnsiTerminal;
+const AnsiParser = require("node-ansiparser");
+
+const COLUMNS = 80;
+const ROWS = 10;
 
 function newOutput() {
-  return new Writable({
+  const output = new Writable({
     write(chunk, encoding, callback) {
       if (chunk.toString()) {
         this.data = this.data || "";
@@ -13,6 +16,9 @@ function newOutput() {
       callback();
     }
   });
+  output.columns = COLUMNS;
+  output.rows = ROWS;
+  return output;
 }
 
 function waitForKeyPressProcessing(prompt) {
@@ -27,7 +33,7 @@ function waitForKeyPressProcessing(prompt) {
 }
 
 function parseOutput(output, rows) {
-  const terminal = new AnsiTerminal(80, (rows = 10), 0);
+  const terminal = new AnsiTerminal(COLUMNS, (rows = 10), 0);
   terminal.newline_mode = true;
 
   const parser = new AnsiParser(terminal);

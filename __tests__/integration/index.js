@@ -8,10 +8,11 @@ const promptText = "test> ";
 
 describe("Integration", () => {
   test("use defaults", async () => {
-    const prompt = Prompt();
+    const output = newOutput();
+    const prompt = Prompt({ input, output });
     const promptP = prompt.start();
     const expected = {
-      columns: 86,
+      columns: 80,
       commandLine: {
         command: "",
         cursor: { cols: 9, linePos: 0, rows: 0 },
@@ -23,7 +24,7 @@ describe("Integration", () => {
       header: "",
       mode: "command",
       returnCommand: false,
-      rows: 57,
+      rows: 10,
       maskInput: false
     };
     expect(prompt.state.plain).toEqual(expected);

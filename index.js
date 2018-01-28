@@ -79,7 +79,7 @@ function Prompt(options = {}) {
 
       this.render({ state, prevState });
 
-      this.onKeyPress("init", { name: "init" });
+      await this.onKeyPress("init", { name: "init" });
 
       return promptPromise;
     },

@@ -1,8 +1,6 @@
-const _mapValues = require("lodash/mapValues");
-const _isString = require("lodash/isString");
-
 const { applyPatch } = require("./immutably");
 const { getEndOfLinePos } = require("./terminal");
+// const debug = require("./debug");
 
 /**
  * Mode
@@ -53,16 +51,20 @@ const { getEndOfLinePos } = require("./terminal");
  */
 
 function updateCursorPos(state, commandLine) {
-  const cursor = getEndOfLinePos(state.columns, commandLine);
+  const eol = getEndOfLinePos(state.columns, commandLine);
+  state = applyPatch(state, {
+    commandLine: { eol }
+  });
   const { linePos } = state.commandLine.cursor;
   if (!linePos) {
     return applyPatch(state, {
-      commandLine: { cursor }
+      commandLine: { cursor: eol }
     });
   }
-  if (linePos > state.commandLine.eol.cols) {
+  const cursor = { ...eol };
+  if (linePos > eol.cols) {
     // prompt line is wrapped and cursor is not on last line
-    let adjustedLinePos = linePos - cursor.cols;
+    let adjustedLinePos = linePos - eol.cols;
     cursor.rows--;
     while (adjustedLinePos > state.columns) {
       adjustedLinePos -= state.columns;
@@ -72,7 +74,8 @@ function updateCursorPos(state, commandLine) {
   } else {
     cursor.cols -= linePos;
   }
-  return applyPatch(state, { commandLine: { cursor } });
+  state = applyPatch(state, { commandLine: { cursor } });
+  return state;
 }
 
 function initialState({ prompt, mode, output }) {

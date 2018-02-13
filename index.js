@@ -1,6 +1,4 @@
-const { emitKeypressEvents, cursorTo } = require("readline");
-
-const { getEndOfLinePos } = require("./terminal");
+const { emitKeypressEvents, cursorTo, moveCursor } = require("readline");
 
 const {
   getCommandLine,
@@ -74,7 +72,6 @@ function Prompt(options = {}) {
       state.maskInput = maskInput;
       state.defaultCommand = defaultCommand;
       state.start(options.prompt);
-      state.eol(getEndOfLinePos(this.output.columns, getCommandLine(state)));
       state.updateCursorPos(getCommandLine(state));
 
       this.render({ state, prevState });
@@ -104,7 +101,7 @@ function Prompt(options = {}) {
         while (this.keyPressQueue.length) {
           [str, key] = this.keyPressQueue.shift();
 
-          debug({ keyPress: key });
+          // debug({ keyPress: key });
 
           const state = this.state;
           const prevState = state.clone();
@@ -117,7 +114,7 @@ function Prompt(options = {}) {
           if (this.commandLineChanged(prevState, state)) {
             state.updateCursorPos(getCommandLine(state));
           } else if (this.cursorMoved(prevState, state)) {
-            debug({ state });
+            // debug({ state });
             state.updateCursorPos(getCommandLine(state));
           }
 
@@ -262,8 +259,6 @@ function Prompt(options = {}) {
      * @returns {Void} undefined
      */
     render({ state, prevState }) {
-      debug({ render: { state: state.plain } });
-
       if (state.plain === prevState.plain) {
         return;
       }
@@ -272,7 +267,8 @@ function Prompt(options = {}) {
         renderHeader(prevState, state, this.output);
       }
 
-      if (this.commandlineNeedsRender(prevState, state)) {
+      const cmdRender = this.commandlineNeedsRender(prevState, state);
+      if (cmdRender) {
         renderCommandLine(state, this.output);
       }
 
@@ -281,6 +277,22 @@ function Prompt(options = {}) {
       }
 
       cursorTo(output, state.cursorCols);
+
+      if (cmdRender) {
+        let eolRows = state.eol().rows;
+        if (!state.eol().cols && eolRows) {
+          eolRows--;
+        }
+        const moveUp = eolRows - state.cursorRows;
+        if (moveUp) {
+          moveCursor(output, 0, -moveUp);
+        }
+      } else if (prevState.cursorRows !== state.cursorRows) {
+        const moveUp = prevState.cursorRows - state.cursorRows;
+        if (moveUp) {
+          moveCursor(output, 0, -moveUp);
+        }
+      }
     },
 
     /**

@@ -11,7 +11,8 @@ describe("render", () => {
       commandLine: {
         prompt: "Makitso>",
         command: "vpn disconnect foo bar baz",
-        cursor: { cols: 24, rows: 0, linePos: 0, col: null }
+        cursor: { cols: 24, rows: 0, linePos: 0, col: null },
+        eol: { cols: 34, rows: 0 }
       },
       footer: "prod sandpit"
     });

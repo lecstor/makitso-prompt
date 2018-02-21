@@ -65,6 +65,7 @@ function Prompt(options = {}) {
       let state = this.state;
       const prevState = state.clone();
 
+      state.commandLine(null);
       state.mode = mode;
       state.header = header;
       state.footer = footer;

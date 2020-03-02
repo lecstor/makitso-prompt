@@ -2,7 +2,7 @@
   "name": "makitso-prompt",
   "version": "2.0.2",
   "description": "a terminal prompt",
-  "main": "index.js",
+  "main": "src/index.js",
   "author": "jason@lecstor.com",
   "license": "MIT",
   "repository": {
@@ -32,9 +32,6 @@
   },
   "scripts": {
     "test": "jest"
-  },
-  "bin": {
-    "makitso": "./bin/index.js"
   },
   "engines": {
     "node": ">=8.9"

@@ -1,7 +1,9 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const Prompt = require("../../index");
-const { newOutput, getResult } = require("../../test-utils");
+import Prompt from "../../src/index";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
 
@@ -12,13 +14,13 @@ describe("wrapped", () => {
     const prompt = Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
-    input.send("abcd bcdefghij");
+    input.write("abcd bcdefghij");
 
     const expected = `test> abcd bcdefghij `;
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 
@@ -28,13 +30,13 @@ describe("wrapped", () => {
     const prompt = Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
-    input.send("abcd bcde fghijklm");
+    input.write("abcd bcde fghijklm");
 
     const expected = `test> abcd bcde fghijklm`;
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 });

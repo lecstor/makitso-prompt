@@ -1,10 +1,14 @@
-const input = require("mock-stdin").stdin();
+import { newOutput } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const { newOutput, getResult } = require("../../test-utils");
-const Prompt = require("../../index");
+import Prompt from "../../src/index";
+import { State } from "../../src/state";
+
+import { KeyPress } from "../../src/types";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
-
 const ret = "\x0D"; // "return" key
 
 describe("error", () => {
@@ -32,7 +36,7 @@ describe("error", () => {
     Object.assign(prompt, {
       keyPressers: [
         {
-          keyPress(state, press) {
+          keyPress(state: State, press: KeyPress) {
             if (press.key.name === "init") {
               return state;
             }
@@ -42,7 +46,7 @@ describe("error", () => {
       ]
     });
     const promptPromise = prompt.start();
-    input.send(`hello${ret}`);
+    input.write(`hello${ret}`);
     expect(promptPromise).rejects.toBe(error);
   });
 });

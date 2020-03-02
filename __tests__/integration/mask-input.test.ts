@@ -1,7 +1,9 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const Prompt = require("../../index");
-const { newOutput, getResult } = require("../../test-utils");
+import Prompt from "../../src/index";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
 
@@ -11,13 +13,13 @@ describe("maskInput", () => {
     const prompt = Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start({ maskInput: true });
 
-    input.send("hello");
+    input.write("hello");
 
     const expected = `${promptText}*****`;
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 });

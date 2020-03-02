@@ -1,7 +1,11 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const { newOutput, getResult } = require("../../test-utils");
-const Prompt = require("../../index");
+import Prompt from "../../src/index";
+import { State } from "../../src/state";
+import { KeyPress } from "../../src/types";
+
+const input = new MockReadable() as any;
 
 const output = newOutput();
 const promptText = "test> ";
@@ -10,7 +14,7 @@ const prompt = Prompt({ input, output, prompt: promptText });
 Object.assign(prompt, {
   keyPressers: [
     {
-      keyPress(state, press) {
+      keyPress(state: State, press: KeyPress) {
         if (press.key.name === "init") {
           state.header = "two line\nheader";
           state.footer = "two line\nfooter";
@@ -38,7 +42,7 @@ describe("header and footer", () => {
   test("keypress", async () => {
     prompt.start();
     await getResult(prompt, output);
-    input.send(`h`);
+    input.write(`h`);
 
     const expected = "one line header\ntest> \none line footer";
     const result = await getResult(prompt, output);

@@ -1,6 +1,8 @@
-const { applyPatch } = require("./immutably");
-const { getEndOfLinePos } = require("./terminal");
+import { applyPatch } from "./immutably";
+import { getEndOfLinePos } from "./terminal";
 // const debug = require("./debug");
+
+import { PlainState, Output } from "./types";
 
 /**
  * Mode
@@ -43,14 +45,14 @@ const { getEndOfLinePos } = require("./terminal");
 /**
  * App state
  * @typedef {Object} State
- * @property {Defaults} default - default prompt and mode
+ * @property {Defaults} defaults - default prompt and mode
  * @property {Modes|String[]} modes - active modes
  * @property {CommandLine} commandLine - everything that makes up the line with the command
  * @property {String} header - line/s printed above the command line
  * @property {String} footer - line/s printed below the command line
  */
 
-function updateCursorPos(state, commandLine) {
+export function updateCursorPos(state: PlainState, commandLine: string) {
   const eol = getEndOfLinePos(state.columns, commandLine);
   state = applyPatch(state, {
     commandLine: { eol }
@@ -66,11 +68,11 @@ function updateCursorPos(state, commandLine) {
     // prompt line is wrapped and cursor is not on last line
     let adjustedLinePos = linePos - eol.cols;
     cursor.rows--;
-    while (adjustedLinePos > state.columns) {
+    while (state.columns && adjustedLinePos > state.columns) {
       adjustedLinePos -= state.columns;
       cursor.rows--;
     }
-    cursor.cols = state.columns - adjustedLinePos;
+    cursor.cols = state.columns ? state.columns - adjustedLinePos : 0;
   } else {
     cursor.cols -= linePos;
   }
@@ -78,7 +80,15 @@ function updateCursorPos(state, commandLine) {
   return state;
 }
 
-function initialState({ prompt, mode, output }) {
+export function initialState({
+  prompt,
+  mode,
+  output
+}: {
+  prompt: string;
+  mode: string;
+  output: Output;
+}) {
   return {
     defaults: { prompt, mode },
     mode,
@@ -94,12 +104,11 @@ function initialState({ prompt, mode, output }) {
     },
     header: "",
     footer: "",
+    history: {
+      commands: [],
+      index: -1
+    },
     columns: output.columns,
     rows: output.rows
   };
 }
-
-module.exports = {
-  updateCursorPos,
-  initialState
-};

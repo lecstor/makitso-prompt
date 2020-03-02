@@ -1,26 +1,12 @@
-const chalk = require("chalk");
+import chalk from "chalk";
 
-const { cursorTo, moveCursor, clearScreenDown } = require("readline");
-const { clearLinesAbove, getEndOfLinePos } = require("./terminal");
+import { cursorTo, moveCursor, clearScreenDown } from "readline";
+import { clearLinesAbove, getEndOfLinePos } from "./terminal";
 
-const debug = require("./debug");
+import { debug } from "./debug";
 
-/**
- * construct the prompt line from prompt, default command, and current command
- * - the default command is not included if returnCommand is set or current command exists
- *
- * @param {Object} state - current state
- * @returns {String} prompt line
- */
-function getCommandLine(state) {
-  // debug({ renderPromptLine: state });
-  const prompt = state.prompt;
-  const cmd = renderCommand(state);
-  // console.log({ statePlain: state.plain });
-  const defaultCmd =
-    state.returnCommand || cmd ? "" : renderDefaultCommand(state);
-  return `${prompt}${defaultCmd}${cmd}`;
-}
+import { Output } from "./types";
+import { State } from "./state";
 
 /**
  * returns a string to be displayed as the current command
@@ -29,7 +15,7 @@ function getCommandLine(state) {
  * @param {Object} state - current state
  * @returns {String} command
  */
-function renderCommand(state) {
+function renderCommand(state: State) {
   const command = state.command;
   const mask = state.maskInput;
   if (mask) {
@@ -47,14 +33,29 @@ function renderCommand(state) {
  * @param {Object} state - current state
  * @returns {String} default command
  */
-function renderDefaultCommand(state) {
+function renderDefaultCommand(state: State) {
   if (!state.defaultCommand) {
     return "";
   }
   return chalk.grey(`[${state.defaultCommand}] `);
 }
 
-function renderHeader(prevState, state, output) {
+/**
+ * construct the prompt line from prompt, default command, and current command
+ * - the default command is not included if returnCommand is set or current command exists
+ *
+ * @param {Object} state - current state
+ * @returns {String} prompt line
+ */
+export function getCommandLine(state: State) {
+  const prompt = state.prompt;
+  const cmd = renderCommand(state);
+  const defaultCmd =
+    state.returnCommand || cmd ? "" : renderDefaultCommand(state);
+  return `${prompt}${defaultCmd}${cmd}`;
+}
+
+export function renderHeader(prevState: State, state: State, output: Output) {
   let rows = 0;
   if (prevState.header) {
     ({ rows } = getEndOfLinePos(output.columns, prevState.header));
@@ -73,7 +74,7 @@ function renderHeader(prevState, state, output) {
   }
 }
 
-function renderCommandLine(state, output) {
+export function renderCommandLine(state: State, output: Output) {
   const commandLine = getCommandLine(state);
 
   // need to move cursor up to prompt row if the commandline has wrapped
@@ -99,17 +100,10 @@ function renderCommandLine(state, output) {
   }
 }
 
-function renderFooter(state, output) {
+export function renderFooter(state: State, output: Output) {
   debug("write newline + footer");
   output.write("\r\n" + state.footer);
   const endOfLinePos = getEndOfLinePos(output.columns, state.footer);
   debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
   moveCursor(output, 0, -(endOfLinePos.rows + 1));
 }
-
-exports = module.exports = {
-  getCommandLine,
-  renderHeader,
-  renderCommandLine,
-  renderFooter
-};

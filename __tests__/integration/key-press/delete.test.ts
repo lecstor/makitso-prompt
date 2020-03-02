@@ -1,7 +1,9 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../../test/utils";
+import { MockReadable } from "../../../test/MockReadable";
 
-const Prompt = require("../../../index");
-const { newOutput, getResult } = require("../../../test-utils");
+import Prompt from "../../../src/index";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
 
@@ -16,7 +18,7 @@ const ret = "\x0D"; // "return" key
 
 describe("key-press", () => {
   describe("delete right", () => {
-    async function fromMiddle(key) {
+    async function fromMiddle(key: string) {
       const output = newOutput();
       const prompt = Prompt({ input, output, prompt: promptText });
 
@@ -24,17 +26,17 @@ describe("key-press", () => {
         expect(command).toEqual("hello");
       });
 
-      input.send(`helloo${leftArrow}${leftArrow}${key}`);
+      input.write(`helloo${leftArrow}${leftArrow}${key}`);
 
       const expected = "test> hello";
       const result = await getResult(prompt, output);
       expect(result).toEqual(expected);
 
-      input.send(ret);
+      input.write(ret);
       return promptP;
     }
 
-    async function fromEnd(key) {
+    async function fromEnd(key: string) {
       const output = newOutput();
       const prompt = Prompt({ input, output, prompt: promptText });
 
@@ -42,13 +44,13 @@ describe("key-press", () => {
         expect(command).toEqual("hello");
       });
 
-      input.send(`hello${key}`);
+      input.write(`hello${key}`);
 
       const expected = "test> hello";
       const result = await getResult(prompt, output);
       expect(result).toEqual(expected);
 
-      input.send(ret);
+      input.write(ret);
       return promptP;
     }
 

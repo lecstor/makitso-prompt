@@ -1,16 +1,17 @@
-const { cursorTo, moveCursor, clearLine } = require("readline");
-const { getDisplayPos } = require("./readline-funcs");
+import { cursorTo, moveCursor, clearLine } from "readline";
+import { getDisplayPos } from "./readline-funcs";
+import { Eol } from "./types";
 
-function clearLines(stream, count = 1) {
+export function clearLines(stream: NodeJS.WritableStream, count = 1) {
   cursorTo(stream, 0);
   while (count > 0) {
-    clearLine(stream);
+    clearLine(stream, 0);
     moveCursor(stream, 0, 1);
     count--;
   }
 }
 
-function clearLinesAbove(stream, count) {
+export function clearLinesAbove(stream: NodeJS.WritableStream, count: number) {
   moveCursor(stream, 0, -count);
   clearLines(stream, count);
   moveCursor(stream, 0, -count);
@@ -22,20 +23,14 @@ function clearLinesAbove(stream, count) {
  * @param {String} lines - string of lines separated with newlines
  * @returns {Object} cols and rows
  */
-function getEndOfLinePos(termWidth = Infinity, lines) {
+export function getEndOfLinePos(termWidth = Infinity, lines: string): Eol {
   const pos = lines.split("\n").reduce(
     (result, line) => {
       const { cols, rows } = getDisplayPos(line, termWidth);
       return { cols, rows: result.rows + rows + 1 };
     },
-    { rows: 0 }
+    { cols: 0, rows: 0 }
   );
   pos.rows--;
   return pos;
 }
-
-module.exports = {
-  clearLines,
-  clearLinesAbove,
-  getEndOfLinePos
-};

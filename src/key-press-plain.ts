@@ -1,44 +1,46 @@
-const {
+import { State } from "./state";
+import { KeyPress } from "./types";
+
+import {
   deleteLeft,
   deleteRight,
   moveCursorLeft,
   moveCursorRight
-} = require("./key-press-actions");
+} from "./key-press-actions";
 
-const keyPressPlain = {
-  keyPress(state, press) {
+export const keyPressPlain = {
+  keyPress(state: State, press: KeyPress): boolean | void | State {
     if (press.key.name === "init") {
       return state;
     }
     if (press.key.ctrl || press.key.meta || state.mode !== "command") {
       return state;
     }
-    return this[press.key.name]
-      ? this[press.key.name](state, press)
-      : this.default(state, press);
+    const name = press.key.name as keyof Omit<typeof keyPressPlain, "keyPress">;
+    return this[name] ? this[name](state, press) : this.default(state, press);
   },
-  backspace: state => deleteLeft(state),
-  delete: state => deleteRight(state),
-  enter: state => state,
-  escape: state => state,
-  left: state => moveCursorLeft(state, 1),
-  return: state => {
-    let command = state.command;
+  backspace: (state: State) => deleteLeft(state),
+  delete: (state: State) => deleteRight(state),
+  enter: (state: State) => state,
+  escape: (state: State) => state,
+  left: (state: State) => moveCursorLeft(state, 1),
+  return: (state: State) => {
+    const command = state.command;
     if (command === "" && state.defaultCommand) {
       state.command = state.defaultCommand;
     }
     return (state.returnCommand = true);
   },
-  right: state => moveCursorRight(state, +1),
-  tab: state => state,
+  right: (state: State) => moveCursorRight(state, +1),
+  tab: (state: State) => state,
 
-  default: (state, press) => {
+  default: (state: State, press: KeyPress) => {
     if (press.str instanceof Buffer) {
       press.str = press.str.toString("utf-8");
     }
     if (press.str) {
       let command = state.command;
-      let linePos = state.cursorLinePos;
+      const linePos = state.cursorLinePos;
       if (linePos) {
         const start = command.slice(0, -linePos);
         const end = command.slice(-linePos);
@@ -47,10 +49,8 @@ const keyPressPlain = {
         command = `${command}${press.str}`;
       }
       state.command = command;
-      state.cursorCols = state.cursorCols + 1;
+      state.cursorCols = state.cursorCols === null ? 1 : state.cursorCols + 1;
     }
     return state;
   }
 };
-
-module.exports = keyPressPlain;

@@ -1,13 +1,15 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../../test/utils";
+import { MockReadable } from "../../../test/MockReadable";
 
-const Prompt = require("../../../index");
-const { newOutput, getResult } = require("../../../test-utils");
+import Prompt from "../../../src/index";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
 
 const backspace = "\x08";
 // const backspace = "\b";
-const ctrlH = "\x7f";
+// const ctrlH = "\x7f";
 
 const termEsc = "\u001b";
 
@@ -17,7 +19,7 @@ const ret = "\x0D"; // "return" key
 
 describe("key-press", () => {
   describe("backspace", () => {
-    async function fromEnd(key) {
+    async function fromEnd() {
       const output = newOutput();
       const prompt = Prompt({ input, output, prompt: promptText });
 
@@ -25,17 +27,17 @@ describe("key-press", () => {
         expect(command).toEqual("hello");
       });
 
-      input.send(`helloo${backspace}`);
+      input.write(`helloo${backspace}`);
 
       const expected = "test> hello";
       const result = await getResult(prompt, output);
       expect(result).toEqual(expected);
 
-      input.send(ret);
+      input.write(ret);
       return promptP;
     }
 
-    async function fromMiddle(key) {
+    async function fromMiddle() {
       const output = newOutput();
       const prompt = Prompt({ input, output, prompt: promptText });
 
@@ -43,18 +45,22 @@ describe("key-press", () => {
         expect(command).toEqual("hello");
       });
 
-      input.send(`helllo${leftArrow}${backspace}`);
+      input.write(`helllo${leftArrow}${backspace}`);
 
       const expected = "test> hello";
       const result = await getResult(prompt, output);
       expect(result).toEqual(expected);
 
-      input.send(ret);
+      input.write(ret);
       return promptP;
     }
-    test("from end (backspace)", () => fromEnd(backspace));
-    test("from middle (backspace)", () => fromMiddle(backspace));
-    test("from end (ctrlH)", () => fromEnd(ctrlH));
-    test("from middle (ctrlH)", () => fromMiddle(ctrlH));
+
+    test("from end ()", () => fromEnd());
+    test("from middle ()", () => fromMiddle());
+
+    // test("from end (backspace)", () => fromEnd(backspace));
+    // test("from middle (backspace)", () => fromMiddle(backspace));
+    // test("from end (ctrlH)", () => fromEnd(ctrlH));
+    // test("from middle (ctrlH)", () => fromMiddle(ctrlH));
   });
 });

@@ -1,6 +1,10 @@
-const _forEach = require("lodash/forEach");
-const _isObject = require("lodash/isObject");
-const _isFunction = require("lodash/isFunction");
+function isFunction(v: unknown) {
+  return Object.prototype.toString.call(v) === "[object Function]";
+}
+
+function isObject(v: unknown) {
+  return Object.prototype.toString.call(v) === "[object Object]";
+}
 
 /**
  * immutably patch an object
@@ -9,14 +13,18 @@ const _isFunction = require("lodash/isFunction");
  * @param {Object} patch - patch to apply
  * @returns {Object} updated state
  */
-function applyPatch(state, patch) {
-  _forEach(patch, (value, key) => {
+export function applyPatch(state: any, patch: any) {
+  Object.keys(patch).forEach(key => {
+    const value = patch[key];
     if (value === undefined) {
       return true;
     }
-    if (_isObject(value) && !_isFunction(value) && !Array.isArray(value)) {
+    if (isObject(value) && !isFunction(value) && !Array.isArray(value)) {
       if (state[key]) {
-        state = { ...state, [key]: applyPatch(state[key], value) };
+        state = {
+          ...state,
+          [key]: applyPatch(state[key], value)
+        };
       } else {
         state[key] = value;
       }
@@ -26,5 +34,3 @@ function applyPatch(state, patch) {
   });
   return { ...state };
 }
-
-module.exports = { applyPatch };

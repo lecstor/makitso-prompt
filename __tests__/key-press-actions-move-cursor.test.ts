@@ -1,14 +1,16 @@
-const { moveCursorLeft, moveCursorRight } = require("../key-press-actions");
-const State = require("../state");
+import { moveCursorLeft, moveCursorRight } from "../src/key-press-actions";
+import { defaultState, State } from "../src/state";
 
 describe("key-press-actions", () => {
   describe("moveCursor", () => {
     describe("Left", () => {
       test("doesn't move cursor into prompt", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 0 },
-            width: 5,
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 0 },
+            // width: 5,
             command: ""
           }
         });
@@ -17,9 +19,11 @@ describe("key-press-actions", () => {
       });
 
       test("moves cursor to prompt", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 0 },
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 0 },
             command: "abc"
           }
         });
@@ -28,9 +32,11 @@ describe("key-press-actions", () => {
       });
 
       test("moves cursor", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 0 },
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 0 },
             command: "abc"
           }
         });
@@ -41,9 +47,11 @@ describe("key-press-actions", () => {
 
     describe("Right", () => {
       test("doesn't move cursor past command end", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 0 },
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 0 },
             command: "abc"
           }
         });
@@ -52,9 +60,11 @@ describe("key-press-actions", () => {
       });
 
       test("moves cursor", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 3 },
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 3 },
             command: "abc"
           }
         });
@@ -63,9 +73,11 @@ describe("key-press-actions", () => {
       });
 
       test("moves cursor to end", () => {
-        const state = State({
+        const state = new State({
+          ...defaultState,
           commandLine: {
-            cursor: { linePos: 2 },
+            ...defaultState.commandLine,
+            cursor: { ...defaultState.commandLine.cursor, linePos: 2 },
             command: "abc"
           }
         });

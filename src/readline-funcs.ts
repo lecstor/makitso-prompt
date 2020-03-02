@@ -33,14 +33,24 @@
 // Matches all ansi escape code sequences in a string
 const ansi = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
 
-var getStringWidth;
-var isFullWidthCodePoint;
+/**
+ * Tries to remove all VT control characters. Use to estimate displayed
+ * string width. May be buggy due to not running a real state machine
+ * @param {String} str - a string
+ * @returns {String} - string without VT ctrl chars
+ */
+export function stripVTControlCharacters(str: string) {
+  return str.replace(ansi, "");
+}
 
-if (process.binding("config").hasIntl) {
-  const icu = process.binding("icu");
-  getStringWidth = function getStringWidth(str, options) {
+let getStringWidth: (str: string | number, options?: any) => number;
+let isFullWidthCodePoint: (code: number, options?: any) => boolean;
+
+if ((process as any).binding("config").hasIntl) {
+  const icu = (process as any).binding("icu");
+  getStringWidth = function getStringWidth(str: string | number, options: any) {
     options = options || {};
-    if (!Number.isInteger(str)) {
+    if (typeof str === "number" && !Number.isInteger(str)) {
       str = stripVTControlCharacters(String(str));
     }
     return icu.getStringWidth(
@@ -49,7 +59,10 @@ if (process.binding("config").hasIntl) {
       Boolean(options.expandEmojiSequence)
     );
   };
-  isFullWidthCodePoint = function isFullWidthCodePoint(code, options) {
+  isFullWidthCodePoint = function isFullWidthCodePoint(
+    code: number,
+    options: any
+  ) {
     if (typeof code !== "number") {
       return false;
     }
@@ -60,7 +73,7 @@ if (process.binding("config").hasIntl) {
    * Returns the number of columns required to display the given string.
    */
   getStringWidth = function getStringWidth(str) {
-    if (Number.isInteger(str)) {
+    if (typeof str === "number" && Number.isInteger(str)) {
       return isFullWidthCodePoint(str) ? 2 : 1;
     }
 
@@ -68,8 +81,8 @@ if (process.binding("config").hasIntl) {
 
     str = stripVTControlCharacters(String(str));
 
-    for (var i = 0; i < str.length; i++) {
-      const code = str.codePointAt(i);
+    for (let i = 0; i < str.length; i++) {
+      const code = str.codePointAt(i) || 0;
 
       if (code >= 0x10000) {
         // surrogates
@@ -134,23 +147,13 @@ if (process.binding("config").hasIntl) {
   };
 }
 
-/**
- * Tries to remove all VT control characters. Use to estimate displayed
- * string width. May be buggy due to not running a real state machine
- * @param {String} str - a string
- * @returns {String} - string without VT ctrl chars
- */
-function stripVTControlCharacters(str) {
-  return str.replace(ansi, "");
-}
-
-function getDisplayPos(str, col) {
-  var offset = 0;
-  var row = 0;
-  var code;
+export function getDisplayPos(str: string, col: number) {
+  let offset = 0;
+  let row = 0;
+  let code;
   str = stripVTControlCharacters(str);
-  for (var i = 0, len = str.length; i < len; i++) {
-    code = str.codePointAt(i);
+  for (let i = 0, len = str.length; i < len; i++) {
+    code = str.codePointAt(i) || 0;
     if (code >= 0x10000) {
       // surrogates
       i++;
@@ -172,9 +175,9 @@ function getDisplayPos(str, col) {
       offset += 2;
     }
   }
-  var cols = offset % col;
-  var rows = row + (offset - cols) / col;
+  const cols = offset % col;
+  const rows = row + (offset - cols) / col;
   return { cols: cols, rows: rows };
 }
 
-module.exports = { getDisplayPos, getStringWidth, stripVTControlCharacters };
+export { getStringWidth };

@@ -1,20 +1,17 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const Prompt = require("../../index");
-const { newOutput, getResult } = require("../../test-utils");
+import history from "../../src/key-press-history";
+import { debug } from "../../src/debug";
 
-const history = require("../../key-press-history");
+import Prompt from "../../src/index";
 
-const debug = require("../../debug");
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
-
 const termEsc = "\u001b";
-
 const leftArrow = `${termEsc}[D`;
-
 const upArrow = `${termEsc}[A`;
-
 const ret = "\x0D"; // "return" key
 const ctrlC = "\x03";
 
@@ -27,13 +24,13 @@ describe("key-press", () => {
       expect(command).toEqual("hello");
     });
 
-    input.send("hello");
+    input.write("hello");
 
     const expected = "test> hello";
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send(ret);
+    input.write(ret);
     return promptP;
   });
 
@@ -45,13 +42,13 @@ describe("key-press", () => {
       expect(command).toEqual("hel");
     });
 
-    input.send(`el${leftArrow}${leftArrow}h`);
+    input.write(`el${leftArrow}${leftArrow}h`);
 
     const expected = "test> hel";
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 
@@ -62,15 +59,15 @@ describe("key-press", () => {
 
       prompt.start();
 
-      input.send(`hello`);
+      input.write(`hello`);
       await getResult(prompt, output);
-      input.send(ctrlC);
+      input.write(ctrlC);
 
       const expected = "";
-      debug({ testOutput: output.data });
+      debug({ testOutput: (output as any).data });
       const result = await getResult(prompt, output);
 
-      debug({ testOutput: output.data });
+      debug({ testOutput: (output as any).data });
       expect(result).toEqual(expected);
     });
 
@@ -81,7 +78,7 @@ describe("key-press", () => {
 
       prompt.start().then(() => prompt.start());
 
-      input.send(`hello${ret}${upArrow}${ctrlC}`);
+      input.write(`hello${ret}${upArrow}${ctrlC}`);
 
       const expected = "test> hello\nhistory> hello";
       const result = await getResult(prompt, output);

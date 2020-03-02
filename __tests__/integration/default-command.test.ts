@@ -1,7 +1,9 @@
-const input = require("mock-stdin").stdin();
+import { newOutput, getResult } from "../../test/utils";
+import { MockReadable } from "../../test/MockReadable";
 
-const Prompt = require("../../index");
-const { newOutput, getResult } = require("../../test-utils");
+import Prompt from "../../src/index";
+
+const input = new MockReadable() as any;
 
 const promptText = "test> ";
 
@@ -15,7 +17,7 @@ describe("default-command", () => {
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 });

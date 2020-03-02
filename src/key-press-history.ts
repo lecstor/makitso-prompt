@@ -1,7 +1,30 @@
-const chalk = require("chalk");
+import chalk from "chalk";
+import { debug } from "./debug";
 
-const keyPressAutoComplete = {
-  keyPress(state, press) {
+import { State } from "./state";
+import { KeyPress } from "./types";
+
+type KPHistory = {
+  keyPress: Function;
+  historyKeyPress: Function;
+  activateHistory: Function;
+  pushHistory: Function;
+  updateHistory: Function;
+  prompt: string;
+  noHistory: {
+    footer: string;
+  };
+  pressKey: {
+    down: Function;
+    escape: (state: State) => void;
+    return: (state: State) => void;
+    up: Function;
+  };
+  getHistory: (state: State) => string[];
+};
+
+const keyPressHistory: KPHistory = {
+  keyPress(state: State, press: KeyPress) {
     if (press.key.name === "init") {
       return state;
     }
@@ -27,7 +50,7 @@ const keyPressAutoComplete = {
    * @param {Object} state - prompt state
    * @returns {Object} state
    */
-  activateHistory(state) {
+  activateHistory(state: State) {
     if (state.plain.history && state.plain.history.commands.length > 1) {
       state.mode = "history";
       state.prompt = this.prompt;
@@ -44,8 +67,8 @@ const keyPressAutoComplete = {
    * @param {Object} state - prompt state
    * @returns {Object} state
    */
-  getHistory(state) {
-    let history = [];
+  getHistory(state: State) {
+    let history: string[] = [];
     if (state.plain.history && state.plain.history.commands) {
       history = state.plain.history.commands.slice(1);
     }
@@ -58,7 +81,7 @@ const keyPressAutoComplete = {
    * @param {Object} state - prompt state
    * @returns {Object} state
    */
-  pushHistory(state) {
+  pushHistory(state: State) {
     const history = this.getHistory(state);
     if (!state.command || state.command === history[0]) {
       return state.patch({
@@ -76,7 +99,7 @@ const keyPressAutoComplete = {
    * @param {Object} state - prompt state
    * @returns {Object} state
    */
-  updateHistory(state) {
+  updateHistory(state: State) {
     const history = this.getHistory(state);
     return state.patch({
       history: { commands: [state.command, ...history] }
@@ -90,16 +113,15 @@ const keyPressAutoComplete = {
    * @param {Object} press - the keypress
    * @returns {Object} state
    */
-  historyKeyPress(state, press) {
+  historyKeyPress(state: State, press: KeyPress) {
     if (press.key.ctrl) {
       return state;
     }
     if (press.key.meta && press.key.name !== "escape") {
       return state;
     }
-    return this.pressKey[press.key.name]
-      ? this.pressKey[press.key.name](state)
-      : state;
+    const keyName = press.key.name as keyof KPHistory["pressKey"];
+    return this.pressKey[keyName] ? this.pressKey[keyName](state) : state;
   },
 
   pressKey: {
@@ -109,12 +131,15 @@ const keyPressAutoComplete = {
      * @param {Object} state - prompt state
      * @returns {Object} state
      */
-    up(state) {
-      const { index } = state.plain.history || {};
+    up(state: State) {
+      debug({ state });
+      const { index = 0 } = state.plain.history || {};
       if (!state.plain.history.commands[index + 1]) {
+        debug("return state unmodified");
         return state;
       }
       state.command = state.plain.history.commands[index + 1];
+      debug(`previous command: ${state.command} & inc history index`);
       return state.patch({ history: { index: index + 1 } });
     },
     /**
@@ -123,7 +148,7 @@ const keyPressAutoComplete = {
      * @param {Object} state - prompt state
      * @returns {Object} state
      */
-    down(state) {
+    down(state: State) {
       const { index } = state.plain.history;
       if (index - 1 === 0) {
         return this.escape(state);
@@ -141,10 +166,10 @@ const keyPressAutoComplete = {
      * @param {Object} state - prompt state
      * @returns {Object} state
      */
-    return(state) {
+    return(state: State) {
       state.mode = state.defaultMode;
       state.prompt = state.defaultPrompt;
-      return state.patch({ history: { index: 0 } });
+      state.patch({ history: { index: 0 } });
     },
 
     /**
@@ -153,13 +178,13 @@ const keyPressAutoComplete = {
      * @param {Object} state - prompt state
      * @returns {Object} state
      */
-    escape(state) {
+    escape(state: State) {
       state.mode = state.defaultMode;
       state.prompt = state.defaultPrompt;
       state.command = state.plain.history.commands[0];
-      return state.patch({ history: { index: 0 } });
+      state.patch({ history: { index: 0 } });
     }
   }
 };
 
-module.exports = keyPressAutoComplete;
+export default keyPressHistory;

@@ -1,17 +1,18 @@
-const { newOutput, parseOutput } = require("../test-utils");
+import { newOutput, parseOutput } from "../test/utils";
 
-const Prompt = require("../index");
-const State = require("../state");
+import Prompt from "../src/index";
+import { defaultState, State } from "../src/state";
 
 describe("render", () => {
   test("add header to prompt", () => {
     const output = newOutput();
     const prompt = Prompt({ output });
-    const prevState = State({
+    const prevState = new State({
+      ...defaultState,
       commandLine: {
         prompt: "Makitso>",
         command: "vpn disconnect foo bar baz",
-        cursor: { cols: 24, rows: 0, linePos: 0, col: null },
+        cursor: { cols: 24, rows: 0, linePos: 0 },
         eol: { cols: 34, rows: 0 }
       },
       footer: "prod sandpit"
@@ -24,7 +25,7 @@ describe("render", () => {
 some short text
 Makitso>vpn disconnect foo bar baz
 prod sandpit`;
-    const result = parseOutput(output.data);
+    const result = parseOutput((output as any).data);
     expect(result).toEqual(expected);
   });
 });

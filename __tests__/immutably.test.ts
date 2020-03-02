@@ -1,4 +1,4 @@
-const { applyPatch } = require("../immutably");
+import { applyPatch } from "../src/immutably";
 
 describe("immutably", () => {
   describe("applyPatch", () => {

@@ -1,9 +1,11 @@
-const input = require("mock-stdin").stdin();
+import { MockReadable } from "../../test/MockReadable";
 
-const Prompt = require("../../index");
-const { newOutput, getResult } = require("../../test-utils");
+import Prompt from "../../src/index";
+import { newOutput, getResult } from "../../test/utils";
 
-// const debug = require("../../debug");
+const input = new MockReadable() as any;
+
+// const debug = require("../../src/debug");
 const promptText = "test> ";
 
 describe("Integration", () => {
@@ -22,6 +24,10 @@ describe("Integration", () => {
       defaults: { command: "", mode: "command", prompt: "makitso> " },
       footer: "",
       header: "",
+      history: {
+        commands: [],
+        index: -1
+      },
       mode: "command",
       returnCommand: false,
       rows: 10,
@@ -29,7 +35,7 @@ describe("Integration", () => {
     };
     expect(prompt.state.plain).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 
@@ -42,7 +48,7 @@ describe("Integration", () => {
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 
@@ -55,7 +61,7 @@ describe("Integration", () => {
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.send("\x0D");
+    input.write("\x0D");
     return promptP;
   });
 });

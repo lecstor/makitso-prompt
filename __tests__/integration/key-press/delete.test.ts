@@ -1,7 +1,7 @@
 import { newOutput, getResult } from "../../../test/utils";
 import { MockReadable } from "../../../test/MockReadable";
 
-import Prompt from "../../../src/index";
+import { Prompt } from "../../../src/index";
 
 const input = new MockReadable() as any;
 
@@ -20,7 +20,7 @@ describe("key-press", () => {
   describe("delete right", () => {
     async function fromMiddle(key: string) {
       const output = newOutput();
-      const prompt = Prompt({ input, output, prompt: promptText });
+      const prompt = new Prompt({ input, output, prompt: promptText });
 
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");
@@ -38,7 +38,7 @@ describe("key-press", () => {
 
     async function fromEnd(key: string) {
       const output = newOutput();
-      const prompt = Prompt({ input, output, prompt: promptText });
+      const prompt = new Prompt({ input, output, prompt: promptText });
 
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");

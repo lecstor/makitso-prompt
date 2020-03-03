@@ -1,7 +1,7 @@
 import { newOutput } from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
 
-import Prompt from "../../src/index";
+import { Prompt } from "../../src/index";
 import { State } from "../../src/state";
 
 import { KeyPress } from "../../src/types";
@@ -14,7 +14,7 @@ const ret = "\x0D"; // "return" key
 describe("error", () => {
   test("keypress throws on start", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
     const error = new Error("Boom");
     Object.assign(prompt, {
       keyPressers: [
@@ -31,7 +31,7 @@ describe("error", () => {
 
   test("keypress throws on keypress", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
     const error = new Error("Boom");
     Object.assign(prompt, {
       keyPressers: [

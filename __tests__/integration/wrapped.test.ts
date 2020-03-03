@@ -1,7 +1,7 @@
 import { newOutput, getResult } from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
 
-import Prompt from "../../src/index";
+import { Prompt } from "../../src/index";
 
 const input = new MockReadable() as any;
 
@@ -11,7 +11,7 @@ describe("wrapped", () => {
   test("render full line", async () => {
     const output = newOutput();
     output.columns = 20;
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
     input.write("abcd bcdefghij");
@@ -27,7 +27,7 @@ describe("wrapped", () => {
   test("render full line and some", async () => {
     const output = newOutput();
     output.columns = 20;
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
     input.write("abcd bcde fghijklm");

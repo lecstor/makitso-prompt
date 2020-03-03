@@ -23,7 +23,7 @@ type KPHistory = {
   getHistory: (state: State) => string[];
 };
 
-const keyPressHistory: KPHistory = {
+export const keyPressHistory: KPHistory = {
   keyPress(state: State, press: KeyPress) {
     if (press.key.name === "init") {
       return state;
@@ -186,5 +186,3 @@ const keyPressHistory: KPHistory = {
     }
   }
 };
-
-export default keyPressHistory;

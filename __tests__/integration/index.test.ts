@@ -1,6 +1,6 @@
 import { MockReadable } from "../../test/MockReadable";
 
-import Prompt from "../../src/index";
+import { Prompt } from "../../src/index";
 import { newOutput, getResult } from "../../test/utils";
 
 const input = new MockReadable() as any;
@@ -9,9 +9,39 @@ const input = new MockReadable() as any;
 const promptText = "test> ";
 
 describe("Integration", () => {
+  test("with no args", async done => {
+    const prompt = new Prompt();
+    console.log(JSON.stringify({ state: prompt.state }, null, 2));
+    prompt.start();
+    const expected = {
+      columns: 0,
+      commandLine: {
+        command: "",
+        // process.input (the default) is not a real console (not TTY) in tests
+        cursor: { cols: NaN, linePos: 0, rows: NaN },
+        eol: { cols: NaN, rows: NaN },
+        prompt: "makitso> "
+      },
+      defaults: { command: "", mode: "command", prompt: "makitso> " },
+      footer: "",
+      header: "",
+      history: {
+        commands: [],
+        index: -1
+      },
+      mode: "command",
+      returnCommand: false,
+      rows: 0,
+      maskInput: false
+    };
+    expect(prompt.state.plain).toEqual(expected);
+
+    done();
+  });
+
   test("use defaults", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output });
+    const prompt = new Prompt({ input, output });
     const promptP = prompt.start();
     const expected = {
       columns: 80,
@@ -39,22 +69,21 @@ describe("Integration", () => {
     return promptP;
   });
 
-  test("set prompt at instantiation", async () => {
+  test("set prompt at instantiation", async done => {
     const output = newOutput();
-    const prompt = Prompt({ input, output, prompt: promptText });
-    const promptP = prompt.start();
+    const prompt = new Prompt({ input, output, prompt: promptText });
+    prompt.start();
 
     const expected = promptText;
-    const result = await getResult(prompt, output);
+    const result = await getResult(prompt, output, 3);
     expect(result).toEqual(expected);
 
-    input.write("\x0D");
-    return promptP;
+    done();
   });
 
   test("set prompt at start", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output });
+    const prompt = new Prompt({ input, output });
     const promptP = prompt.start({ prompt: promptText });
 
     const expected = promptText;

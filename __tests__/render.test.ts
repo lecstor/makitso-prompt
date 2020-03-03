@@ -1,12 +1,12 @@
 import { newOutput, parseOutput } from "../test/utils";
 
-import Prompt from "../src/index";
+import { Prompt } from "../src/index";
 import { defaultState, State } from "../src/state";
 
 describe("render", () => {
   test("add header to prompt", () => {
     const output = newOutput();
-    const prompt = Prompt({ output });
+    const prompt = new Prompt({ output });
     const prevState = new State({
       ...defaultState,
       commandLine: {

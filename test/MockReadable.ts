@@ -1,5 +1,7 @@
 import * as stream from "stream";
 
+import { debug } from "../src/debug";
+
 const defaults = {
   encoding: "utf8"
 };
@@ -42,7 +44,7 @@ export class MockReadable extends stream.Readable {
     if (!this.readable) {
       throw new Error("This stream has already finished");
     }
-
+    debug({ data });
     this._data.push(...data);
     this._immutableData.push(...data);
 

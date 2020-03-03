@@ -1,7 +1,7 @@
 import { newOutput, getResult } from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
 
-import Prompt from "../../src/index";
+import { Prompt } from "../../src/index";
 import { State } from "../../src/state";
 import { KeyPress } from "../../src/types";
 
@@ -9,7 +9,7 @@ const input = new MockReadable() as any;
 
 const output = newOutput();
 const promptText = "test> ";
-const prompt = Prompt({ input, output, prompt: promptText });
+const prompt = new Prompt({ input, output, prompt: promptText });
 
 Object.assign(prompt, {
   keyPressers: [

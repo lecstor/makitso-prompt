@@ -3,7 +3,7 @@ import { Writable } from "stream";
 import { AnsiTerminal } from "node-ansiterminal";
 import AnsiParser from "node-ansiparser";
 
-import { PromptClass } from "../src";
+import { Prompt } from "../src";
 import { Output } from "../src/types";
 
 const COLUMNS = 80;
@@ -24,7 +24,7 @@ export function newOutput() {
   return output;
 }
 
-export function waitForKeyPressProcessing(prompt: PromptClass) {
+export function waitForKeyPressProcessing(prompt: Prompt) {
   return new Promise(resolve => {
     setTimeout(() => {
       if (prompt.keyPressQueueProcessing) {
@@ -45,11 +45,7 @@ export function parseOutput(output: Writable, rows = 10) {
   return terminal.toString("utf8").replace(/\n+$/, "");
 }
 
-export async function getResult(
-  prompt: PromptClass,
-  output: Output,
-  rows?: number
-) {
+export async function getResult(prompt: Prompt, output: Output, rows?: number) {
   await waitForKeyPressProcessing(prompt);
   const result = parseOutput((output as any).data, rows);
   return result;

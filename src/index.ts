@@ -16,7 +16,7 @@ import { keyPressCtrl } from "./key-press-ctrl";
 
 import { debug } from "./debug";
 
-export class PromptClass {
+export class Prompt {
   input: typeof process.stdin;
   output: Output;
   state: State;
@@ -25,7 +25,7 @@ export class PromptClass {
   reject?: (reason?: unknown) => void;
   keyPressQueue: KeyPress[];
   keyPressQueueProcessing: boolean;
-  keypressListener?: PromptClass["onKeyPress"];
+  keypressListener?: Prompt["onKeyPress"];
 
   constructor({
     prompt = "makitso> ",
@@ -265,6 +265,12 @@ export class PromptClass {
    * @returns {Void} undefined
    */
   render({ state, prevState }: { state: State; prevState: State }) {
+    debug(
+      "render",
+      state.plain !== prevState.plain,
+      state.plain,
+      prevState.plain
+    );
     if (state.plain === prevState.plain) {
       return;
     }
@@ -274,6 +280,7 @@ export class PromptClass {
     }
 
     const cmdRender = this.commandlineNeedsRender(prevState, state);
+    debug({ cmdRender });
     if (cmdRender) {
       renderCommandLine(state, this.output);
     }
@@ -307,10 +314,12 @@ export class PromptClass {
    * @returns {void}
    */
   listenToInput() {
-    this.input.setRawMode(true);
-    this.input.resume();
+    if (this.input?.isTTY) {
+      this.input.setRawMode(true);
+    }
+    this.input?.resume();
     this.keypressListener = this.onKeyPress.bind(this);
-    this.input.on("keypress", this.keypressListener);
+    this.input?.on("keypress", this.keypressListener);
   }
 
   /**
@@ -319,15 +328,9 @@ export class PromptClass {
    * @returns {void}
    */
   stopListenToInput() {
-    this.input.setRawMode(false);
-    this.input.pause();
+    this.input?.setRawMode(false);
+    this.input?.pause();
     this.keypressListener &&
-      this.input.removeListener("keypress", this.keypressListener);
+      this.input?.removeListener("keypress", this.keypressListener);
   }
-}
-
-export default function Prompt(
-  args: ConstructorParameters<typeof PromptClass>[0]
-) {
-  return new PromptClass(args);
 }

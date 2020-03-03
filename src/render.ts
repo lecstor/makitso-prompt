@@ -8,6 +8,11 @@ import { debug } from "./debug";
 import { Output } from "./types";
 import { State } from "./state";
 
+function write(output: Output, content: string) {
+  debug("output.write", content);
+  output.write(content);
+}
+
 /**
  * returns a string to be displayed as the current command
  * - if state.maskInput is true then the command will be masked (eg for password input)
@@ -67,10 +72,10 @@ export function renderHeader(prevState: State, state: State, output: Output) {
   clearScreenDown(output);
 
   debug("write header");
-  output.write(`${state.header}`);
+  write(output, `${state.header}`);
   if (state.header.length) {
     debug("write newline");
-    output.write("\r\n");
+    write(output, "\r\n");
   }
 }
 
@@ -83,7 +88,7 @@ export function renderCommandLine(state: State, output: Output) {
     // then we need to make room for the next line
     if (state.cursorCols === 0) {
       debug("write newline");
-      output.write("\r\n");
+      write(output, "\r\n");
     }
     debug(`moveCursor 0, ${-state.cursorRows}`);
     moveCursor(output, 0, -state.cursorRows);
@@ -92,17 +97,17 @@ export function renderCommandLine(state: State, output: Output) {
   debug("clear screen down");
   clearScreenDown(output);
   debug("write prompt");
-  output.write(commandLine);
+  write(output, commandLine);
 
   if (commandLine && state.cursorCols === 0) {
     debug("write space");
-    output.write(" "); // Force terminal to allocate a new line
+    write(output, " "); // Force terminal to allocate a new line
   }
 }
 
 export function renderFooter(state: State, output: Output) {
   debug("write newline + footer");
-  output.write("\r\n" + state.footer);
+  write(output, "\r\n" + state.footer);
   const endOfLinePos = getEndOfLinePos(output.columns, state.footer);
   debug(`moveCursor 0, ${-(endOfLinePos.rows + 1)}`);
   moveCursor(output, 0, -(endOfLinePos.rows + 1));

@@ -1,19 +1,20 @@
 const chalk = require("chalk");
 
-const Prompt = require("./dist/index").default;
+const { Prompt } = require("./dist/index");
 
 const { keyPressAutoComplete } = require("./dist/key-press-autocomplete");
-const history = require("./dist/key-press-history").default;
+const { keyPressHistory } = require("./dist/key-press-history");
 
 const complete = keyPressAutoComplete(["abc1", "ab12", "abcdefg", "a123"]);
 
-const prompt = Prompt({ prompt: chalk`{blue default> }` });
+const prompt = new Prompt({ prompt: chalk`{blue default> }` });
 
 Object.assign(prompt, {
-  keyPressers: [...prompt.keyPressers, history, complete]
+  keyPressers: [...prompt.keyPressers, keyPressHistory, complete]
 });
 
-const options = {};
+// const options = {};
+const options = undefined;
 
 function newPrompt() {
   return prompt.start(options).then(command => {

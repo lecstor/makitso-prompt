@@ -1,10 +1,10 @@
 import { newOutput, getResult } from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
 
-import history from "../../src/key-press-history";
+import { keyPressHistory } from "../../src/key-press-history";
 import { debug } from "../../src/debug";
 
-import Prompt from "../../src/index";
+import { Prompt } from "../../src/index";
 
 const input = new MockReadable() as any;
 
@@ -18,7 +18,7 @@ const ctrlC = "\x03";
 describe("key-press", () => {
   test("plain text", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
 
     const promptP = prompt.start().then(command => {
       expect(command).toEqual("hello");
@@ -36,7 +36,7 @@ describe("key-press", () => {
 
   test("insert", async () => {
     const output = newOutput();
-    const prompt = Prompt({ input, output, prompt: promptText });
+    const prompt = new Prompt({ input, output, prompt: promptText });
 
     const promptP = prompt.start().then(command => {
       expect(command).toEqual("hel");
@@ -55,7 +55,7 @@ describe("key-press", () => {
   describe("ctrl", () => {
     test("exit with ctrl-c", async () => {
       const output = newOutput();
-      const prompt = Prompt({ input, output, prompt: promptText });
+      const prompt = new Prompt({ input, output, prompt: promptText });
 
       prompt.start();
 
@@ -73,8 +73,10 @@ describe("key-press", () => {
 
     test("exit with ctrl-c from a mode other than command", async () => {
       const output = newOutput();
-      const prompt = Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, { keyPressers: [...prompt.keyPressers, history] });
+      const prompt = new Prompt({ input, output, prompt: promptText });
+      Object.assign(prompt, {
+        keyPressers: [...prompt.keyPressers, keyPressHistory]
+      });
 
       prompt.start().then(() => prompt.start());
 

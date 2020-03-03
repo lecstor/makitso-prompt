@@ -90,7 +90,7 @@ export function initialState({
   output: Output;
 }) {
   return {
-    defaults: { prompt, mode },
+    defaults: { prompt, mode, command: "" },
     mode,
     commandLine: {
       prompt: "",
@@ -108,7 +108,9 @@ export function initialState({
       commands: [],
       index: -1
     },
-    columns: output.columns,
-    rows: output.rows
+    maskInput: false,
+    returnCommand: false,
+    columns: output.columns || 0,
+    rows: output.rows || 0
   };
 }

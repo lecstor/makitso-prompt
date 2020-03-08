@@ -11,18 +11,20 @@ import { State } from "./state";
 import { initialState } from "./state-utils";
 import { KeyPress, Output } from "./types";
 
-import { keyPressPlain } from "./key-press-plain";
-import { keyPressCtrl } from "./key-press-ctrl";
+import { keyPressPlain } from "./key-press/plain";
+import { keyPressCtrl } from "./key-press/ctrl";
 
 import { debug } from "./debug";
+
+export * from "./key-press";
 
 export class Prompt {
   input: typeof process.stdin;
   output: Output;
   state: State;
   keyPressers: [typeof keyPressPlain, typeof keyPressCtrl];
-  resolve?: (value?: unknown) => void;
-  reject?: (reason?: unknown) => void;
+  resolve?: (value?: string) => void;
+  reject?: (reason?: Error) => void;
   keyPressQueue: KeyPress[];
   keyPressQueueProcessing: boolean;
   keypressListener?: Prompt["onKeyPress"];
@@ -265,12 +267,6 @@ export class Prompt {
    * @returns {Void} undefined
    */
   render({ state, prevState }: { state: State; prevState: State }) {
-    debug(
-      "render",
-      state.plain !== prevState.plain,
-      state.plain,
-      prevState.plain
-    );
     if (state.plain === prevState.plain) {
       return;
     }
@@ -280,7 +276,6 @@ export class Prompt {
     }
 
     const cmdRender = this.commandlineNeedsRender(prevState, state);
-    debug({ cmdRender });
     if (cmdRender) {
       renderCommandLine(state, this.output);
     }
@@ -328,7 +323,9 @@ export class Prompt {
    * @returns {void}
    */
   stopListenToInput() {
-    this.input?.setRawMode(false);
+    if (this.input?.isTTY) {
+      this.input?.setRawMode(false);
+    }
     this.input?.pause();
     this.keypressListener &&
       this.input?.removeListener("keypress", this.keypressListener);

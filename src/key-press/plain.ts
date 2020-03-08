@@ -1,12 +1,14 @@
-import { State } from "./state";
-import { KeyPress } from "./types";
+import { State } from "../state";
+import { KeyPress } from "../types";
 
 import {
   deleteLeft,
   deleteRight,
   moveCursorLeft,
   moveCursorRight
-} from "./key-press-actions";
+} from "../key-press-actions";
+
+import { debug } from "../debug";
 
 export const keyPressPlain = {
   keyPress(state: State, press: KeyPress): boolean | void | State {
@@ -41,6 +43,7 @@ export const keyPressPlain = {
     if (press.str) {
       let command = state.command;
       const linePos = state.cursorLinePos;
+      debug({ command, linePos });
       if (linePos) {
         const start = command.slice(0, -linePos);
         const end = command.slice(-linePos);
@@ -48,6 +51,7 @@ export const keyPressPlain = {
       } else {
         command = `${command}${press.str}`;
       }
+      debug({ command });
       state.command = command;
       state.cursorCols = state.cursorCols === null ? 1 : state.cursorCols + 1;
     }

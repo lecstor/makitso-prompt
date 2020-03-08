@@ -1,22 +1,17 @@
-import { newOutput, getResult } from "../../test/utils";
+import { newOutput, newPrompt, getResult } from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
-
-import { Prompt } from "../../src/index";
-
-const input = new MockReadable() as any;
-
-const promptText = "test> ";
 
 describe("wrapped", () => {
   test("render full line", async () => {
+    const input = new MockReadable();
     const output = newOutput();
+    const prompt = newPrompt(input, output);
     output.columns = 20;
-    const prompt = new Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
     input.write("abcd bcdefghij");
 
-    const expected = `test> abcd bcdefghij `;
+    const expected = `test> abcd bcdefghij`;
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
@@ -25,9 +20,10 @@ describe("wrapped", () => {
   });
 
   test("render full line and some", async () => {
+    const input = new MockReadable();
     const output = newOutput();
+    const prompt = newPrompt(input, output);
     output.columns = 20;
-    const prompt = new Prompt({ input, output, prompt: promptText });
     const promptP = prompt.start();
 
     input.write("abcd bcde fghijklm");

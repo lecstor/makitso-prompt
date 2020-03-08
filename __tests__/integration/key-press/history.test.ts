@@ -1,27 +1,34 @@
-import { newOutput, getResult } from "../../../test/utils";
+import {
+  newOutput,
+  Output,
+  newPrompt as origNewPrompt,
+  waitForKeyPressProcessing,
+  getResult
+} from "../../../test/utils";
 import { MockReadable } from "../../../test/MockReadable";
 
-import { keyPressHistory } from "../../../src/key-press-history";
+import { keyPressHistory } from "../../../src/key-press/history";
 
-import { Prompt } from "../../../src/index";
-
-const input = new MockReadable() as any;
-
-const promptText = "test> ";
 const ctrlB = `\x02`;
 const termEsc = "\u001b";
 const upArrow = `${termEsc}[A`;
 const downArrow = `${termEsc}[B`;
 const ret = "\x0D"; // "return" key
 
+function newPrompt(input: MockReadable, output: Output) {
+  const prompt = origNewPrompt(input, output);
+  Object.assign(prompt, {
+    keyPressers: [...prompt.keyPressers, keyPressHistory]
+  });
+  return prompt;
+}
+
 describe("key-press", () => {
   describe("history", () => {
     test("activate with no history items", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt.start();
       input.write(upArrow);
@@ -31,11 +38,9 @@ describe("key-press", () => {
     });
 
     test("do not add empty history item", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt.start();
       input.write(ret);
@@ -45,11 +50,9 @@ describe("key-press", () => {
     });
 
     test("do not add duplicate history item", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt
         .start()
@@ -65,11 +68,9 @@ describe("key-press", () => {
     });
 
     test("activate history", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt.start().then(() => prompt.start());
       await getResult(prompt, output, 2);
@@ -80,11 +81,9 @@ describe("key-press", () => {
     });
 
     test("deactivate history", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt.start().then(() => prompt.start());
 
@@ -102,32 +101,48 @@ describe("key-press", () => {
     });
 
     test("down to later history item", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
-      prompt
-        .start()
-        .then(() => prompt.start())
-        .then(() => prompt.start());
+      const promptP = prompt.start();
       input.write(`hello${ret}`);
-      await getResult(prompt, output, 2);
+      await waitForKeyPressProcessing(prompt);
+      promptP.then(() => prompt.start());
       input.write(`goodbye${ret}`);
-      await getResult(prompt, output, 2);
-      input.write(`${upArrow}${upArrow}${downArrow}`);
-      const expected = "test> hello\ntest> goodbye\nhistory> goodbye";
-      const result = await getResult(prompt, output, 3);
-      expect(result).toEqual(expected);
+      await waitForKeyPressProcessing(prompt);
+
+      prompt.start();
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\ntest> goodbye\ntest> "
+      );
+
+      input.write(`${upArrow}`);
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\ntest> goodbye\nhistory> goodbye"
+      );
+
+      input.write(`${upArrow}`);
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\ntest> goodbye\nhistory> hello"
+      );
+
+      input.write(`${downArrow}`);
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\ntest> goodbye\nhistory> goodbye"
+      );
+
+      input.write(`${downArrow}`);
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\ntest> goodbye\ntest> "
+      );
+      return promptP;
     });
 
     test("ignore ctrl chars (except c) when not in command mode", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
-      Object.assign(prompt, {
-        keyPressers: [...prompt.keyPressers, keyPressHistory]
-      });
+      const prompt = newPrompt(input, output);
 
       prompt.start().then(() => {
         prompt.start();

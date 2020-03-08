@@ -1,14 +1,13 @@
-import { newOutput, getResult } from "../../test/utils";
+import {
+  newOutput,
+  getResult,
+  newPrompt,
+  waitForKeyPressProcessing
+} from "../../test/utils";
 import { MockReadable } from "../../test/MockReadable";
 
-import { keyPressHistory } from "../../src/key-press-history";
-import { debug } from "../../src/debug";
+import { keyPressHistory } from "../../src/key-press/history";
 
-import { Prompt } from "../../src/index";
-
-const input = new MockReadable() as any;
-
-const promptText = "test> ";
 const termEsc = "\u001b";
 const leftArrow = `${termEsc}[D`;
 const upArrow = `${termEsc}[A`;
@@ -17,11 +16,14 @@ const ctrlC = "\x03";
 
 describe("key-press", () => {
   test("plain text", async () => {
+    const input = new MockReadable();
     const output = newOutput();
-    const prompt = new Prompt({ input, output, prompt: promptText });
+    const prompt = newPrompt(input, output);
 
     const promptP = prompt.start().then(command => {
       expect(command).toEqual("hello");
+      prompt.stopListenToInput();
+      prompt.resolve?.();
     });
 
     input.write("hello");
@@ -30,13 +32,15 @@ describe("key-press", () => {
     const result = await getResult(prompt, output);
     expect(result).toEqual(expected);
 
-    input.write(ret);
+    input.write("\x0D");
+
     return promptP;
   });
 
   test("insert", async () => {
+    const input = new MockReadable();
     const output = newOutput();
-    const prompt = new Prompt({ input, output, prompt: promptText });
+    const prompt = newPrompt(input, output);
 
     const promptP = prompt.start().then(command => {
       expect(command).toEqual("hel");
@@ -54,8 +58,9 @@ describe("key-press", () => {
 
   describe("ctrl", () => {
     test("exit with ctrl-c", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
 
       prompt.start();
 
@@ -64,27 +69,35 @@ describe("key-press", () => {
       input.write(ctrlC);
 
       const expected = "";
-      debug({ testOutput: (output as any).data });
       const result = await getResult(prompt, output);
 
-      debug({ testOutput: (output as any).data });
       expect(result).toEqual(expected);
     });
 
     test("exit with ctrl-c from a mode other than command", async () => {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
       Object.assign(prompt, {
         keyPressers: [...prompt.keyPressers, keyPressHistory]
       });
 
-      prompt.start().then(() => prompt.start());
+      const promptP = prompt.start();
+      input.write(`hello${ret}`);
+      await waitForKeyPressProcessing(prompt);
+      promptP.then(() => prompt.start());
 
-      input.write(`hello${ret}${upArrow}${ctrlC}`);
+      input.write(`${upArrow}`);
+      expect(await getResult(prompt, output)).toEqual(
+        "test> hello\nhistory> hello"
+      );
 
-      const expected = "test> hello\nhistory> hello";
-      const result = await getResult(prompt, output);
+      input.write(`${ctrlC}`);
+      const expected = "test> hello";
+      const result = await getResult(prompt, output, 2);
       expect(result).toEqual(expected);
+
+      return promptP;
     });
   });
 });

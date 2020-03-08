@@ -1,6 +1,6 @@
 import _filter from "lodash/filter";
-import { Choice, KeyPress } from "./types";
-import { State } from "./state";
+import { Choice, KeyPress } from "../types";
+import { State } from "../state";
 
 export function keyPressAutoComplete(choices: Choice[]) {
   return {

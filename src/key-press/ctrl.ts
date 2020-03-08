@@ -1,6 +1,6 @@
-import { deleteRight, moveCursorLeft } from "./key-press-actions";
-import { State } from "./state";
-import { KeyPress } from "./types";
+import { deleteRight, moveCursorLeft } from "../key-press-actions";
+import { State } from "../state";
+import { KeyPress } from "../types";
 
 export const keyPressCtrl = {
   keyPress(state: State, press: KeyPress): boolean | void | State {

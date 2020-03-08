@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import { debug } from "./debug";
+import { debug } from "../debug";
 
-import { State } from "./state";
-import { KeyPress } from "./types";
+import { State } from "../state";
+import { KeyPress } from "../types";
 
 type KPHistory = {
   keyPress: Function;
@@ -132,7 +132,6 @@ export const keyPressHistory: KPHistory = {
      * @returns {Object} state
      */
     up(state: State) {
-      debug({ state });
       const { index = 0 } = state.plain.history || {};
       if (!state.plain.history.commands[index + 1]) {
         debug("return state unmodified");

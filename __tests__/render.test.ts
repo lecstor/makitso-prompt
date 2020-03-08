@@ -1,12 +1,13 @@
-import { newOutput, parseOutput } from "../test/utils";
+import { MockReadable } from "../test/MockReadable";
+import { newOutput, newPrompt, parseOutput } from "../test/utils";
 
-import { Prompt } from "../src/index";
 import { defaultState, State } from "../src/state";
 
 describe("render", () => {
   test("add header to prompt", () => {
+    const input = new MockReadable();
     const output = newOutput();
-    const prompt = new Prompt({ output });
+    const prompt = newPrompt(input, output);
     const prevState = new State({
       ...defaultState,
       commandLine: {

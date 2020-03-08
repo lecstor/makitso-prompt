@@ -1,11 +1,5 @@
-import { newOutput, getResult } from "../../../test/utils";
+import { newOutput, newPrompt, getResult } from "../../../test/utils";
 import { MockReadable } from "../../../test/MockReadable";
-
-import { Prompt } from "../../../src/index";
-
-const input = new MockReadable() as any;
-
-const promptText = "test> ";
 
 const termEsc = "\u001b";
 
@@ -20,8 +14,9 @@ const ret = "\x0D"; // "return" key
 describe("key-press", () => {
   describe("move cursor left", () => {
     async function fromEnd(key: string) {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
 
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");
@@ -38,8 +33,9 @@ describe("key-press", () => {
     }
 
     async function fromStart(key: string) {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");
       });
@@ -61,8 +57,9 @@ describe("key-press", () => {
 
   describe("move cursor right", () => {
     async function fromMiddle() {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
 
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");
@@ -78,8 +75,9 @@ describe("key-press", () => {
     }
 
     async function fromEnd() {
+      const input = new MockReadable();
       const output = newOutput();
-      const prompt = new Prompt({ input, output, prompt: promptText });
+      const prompt = newPrompt(input, output);
 
       const promptP = prompt.start().then(command => {
         expect(command).toEqual("hello");

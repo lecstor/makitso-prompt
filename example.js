@@ -2,8 +2,8 @@ const chalk = require("chalk");
 
 const { Prompt } = require("./dist/index");
 
-const { keyPressAutoComplete } = require("./dist/key-press-autocomplete");
-const { keyPressHistory } = require("./dist/key-press-history");
+const { keyPressAutoComplete } = require("./dist/key-press/autocomplete");
+const { keyPressHistory } = require("./dist/key-press/history");
 
 const complete = keyPressAutoComplete(["abc1", "ab12", "abcdefg", "a123"]);
 

@@ -1,3 +1,5 @@
+// https://github.com/TylorS/stdio-mock/blob/master/src/MockReadable.ts
+
 import * as stream from "stream";
 
 import { debug } from "../src/debug";
@@ -7,8 +9,8 @@ const defaults = {
 };
 
 export class MockReadable extends stream.Readable {
-  private _data: Array<any> = [];
-  private _immutableData: Array<any> = [];
+  _data: Array<any> = [];
+  _immutableData: Array<any> = [];
 
   constructor(options?: stream.ReadableOptions) {
     super(Object.assign({}, defaults, options));

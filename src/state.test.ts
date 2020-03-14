@@ -1,4 +1,4 @@
-import { State } from "../src/state";
+import { State } from "./state";
 
 describe("state", () => {
   test("commandLine", () => {

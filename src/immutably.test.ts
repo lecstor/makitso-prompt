@@ -1,4 +1,4 @@
-import { applyPatch } from "../src/immutably";
+import { applyPatch } from "./immutably";
 
 describe("immutably", () => {
   describe("applyPatch", () => {

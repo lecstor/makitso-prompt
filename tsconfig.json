@@ -11,8 +11,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "__tests__",
     "test",
-    "src/**/*.test.*"
+    "**/__tests__",
+    "**/*.test.*"
   ]
 }

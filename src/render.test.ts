@@ -1,7 +1,7 @@
 import { MockReadable } from "../test/MockReadable";
 import { newOutput, newPrompt, parseOutput } from "../test/utils";
 
-import { defaultState, State } from "../src/state";
+import { defaultState, State } from "./state";
 
 describe("render", () => {
   test("add header to prompt", () => {

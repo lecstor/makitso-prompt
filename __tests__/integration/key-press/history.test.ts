@@ -64,7 +64,7 @@ describe("key-press", () => {
       await getResult(prompt, output, 2);
       input.write(`hello${ret}`);
       await getResult(prompt, output, 2);
-      expect(prompt.state.plain.history.commands).toEqual(["", "hello", "foo"]);
+      expect(prompt.state.pojo.history.commands).toEqual(["", "hello", "foo"]);
     });
 
     test("activate history", async () => {

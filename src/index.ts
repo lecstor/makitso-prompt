@@ -17,6 +17,8 @@ import { keyPressCtrl } from "./key-press/ctrl";
 import { debug } from "./debug";
 
 export * from "./key-press";
+export * from "./types";
+export * from "./state";
 
 export class Prompt {
   input: typeof process.stdin;
@@ -65,7 +67,7 @@ export class Prompt {
     default: defaultCommand = "",
     command = "",
     prompt = ""
-  } = {}) {
+  } = {}): Promise<unknown> {
     emitKeypressEvents(this.input);
 
     this.listenToInput();
@@ -267,7 +269,7 @@ export class Prompt {
    * @returns {Void} undefined
    */
   render({ state, prevState }: { state: State; prevState: State }) {
-    if (state.plain === prevState.plain) {
+    if (state.pojo === prevState.pojo) {
       return;
     }
 

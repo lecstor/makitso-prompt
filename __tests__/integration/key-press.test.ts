@@ -15,7 +15,7 @@ const ret = "\x0D"; // "return" key
 const ctrlC = "\x03";
 
 describe("key-press", () => {
-  test("plain text", async () => {
+  test("pojo text", async () => {
     const input = new MockReadable();
     const output = newOutput();
     const prompt = newPrompt(input, output);

@@ -68,7 +68,7 @@ The `keyPress` method is called with the app `state` object and a `press` object
 Keypress handlers use the `press` and/or `state` objects to decide what, if
 anything, needs to be changed in the `state` object. Changes are made using
 state methods or using the `applyPatch` function from `makitso-prompt/immutably`
-on `state.plain`.
+on `state.pojo`.
 
 ```js
 const _filter = require("lodash/filter");
@@ -87,7 +87,7 @@ function AutoComplete(choices) {
           state.command = matches[0] + " ";
           state.cursorCols = null;
         } else {
-          // state.plain = applyPatch(state.plain, { footer: matches.join(" ") });
+          // state.pojo = applyPatch(state.pojo, { footer: matches.join(" ") });
           state.footer = matches.join(" ");
         }
       }

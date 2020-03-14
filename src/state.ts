@@ -6,7 +6,7 @@ import {
   Cursor,
   Eol,
   Prompt,
-  PlainState,
+  StatePojo,
   RecursivePartial
 } from "./types";
 
@@ -37,10 +37,12 @@ export const defaultState = {
   // rows: output.rows
 };
 
+export type Stash = { [key: string]: any };
+
 export class State {
-  plain: PlainState;
-  constructor(plain: PlainState = defaultState) {
-    this.plain = plain;
+  constructor(public pojo: StatePojo, public stash: Stash = {}) {
+    this.pojo = pojo || defaultState;
+    this.stash = stash;
   }
 
   start(prompt: Prompt) {
@@ -49,29 +51,29 @@ export class State {
     this.returnCommand = false;
   }
 
-  patch(patch: RecursivePartial<PlainState>) {
-    this.plain = applyPatch(this.plain, patch);
+  patch(patch: RecursivePartial<StatePojo>) {
+    this.pojo = applyPatch(this.pojo, patch);
   }
 
   commandLine(commandLine?: RecursivePartial<CommandLine> | null) {
     if (undef(commandLine)) {
-      return this.plain.commandLine;
+      return this.pojo.commandLine;
     }
-    this.plain = applyPatch(this.plain, { commandLine });
+    this.pojo = applyPatch(this.pojo, { commandLine });
   }
 
-  defaults(defaults?: Partial<PlainState["defaults"]>) {
+  defaults(defaults?: Partial<StatePojo["defaults"]>) {
     if (undef(defaults)) {
-      return this.plain.defaults;
+      return this.pojo.defaults;
     }
-    this.plain = applyPatch(this.plain, { defaults });
+    this.pojo = applyPatch(this.pojo, { defaults });
   }
 
   /**
    * @type {String}
    */
   get defaultCommand() {
-    return this.plain.defaults.command;
+    return this.pojo.defaults.command;
   }
   set defaultCommand(command) {
     this.defaults({ command });
@@ -81,7 +83,7 @@ export class State {
    * @type {String}
    */
   get defaultPrompt() {
-    return this.plain.defaults.prompt;
+    return this.pojo.defaults.prompt;
   }
   set defaultPrompt(prompt) {
     this.defaults({ prompt });
@@ -91,7 +93,7 @@ export class State {
    * @type {String}
    */
   get defaultMode() {
-    return this.plain.defaults.mode;
+    return this.pojo.defaults.mode;
   }
   set defaultMode(mode) {
     this.defaults({ mode });
@@ -101,7 +103,7 @@ export class State {
    * @type {String}
    */
   get command() {
-    return this.plain.commandLine.command;
+    return this.pojo.commandLine.command;
   }
   set command(command) {
     this.commandLine({ command });
@@ -111,7 +113,7 @@ export class State {
    * @type {String}
    */
   get prompt() {
-    return this.plain.commandLine.prompt;
+    return this.pojo.commandLine.prompt;
   }
   set prompt(prompt) {
     this.commandLine({ prompt });
@@ -119,7 +121,7 @@ export class State {
 
   eol(eol?: Eol) {
     if (undef(eol)) {
-      return this.plain.commandLine.eol;
+      return this.pojo.commandLine.eol;
     }
     this.commandLine({ eol });
   }
@@ -128,25 +130,25 @@ export class State {
    * @type {String}
    */
   get header() {
-    return this.plain.header;
+    return this.pojo.header;
   }
   set header(header) {
-    this.plain = applyPatch(this.plain, { header });
+    this.pojo = applyPatch(this.pojo, { header });
   }
 
   /**
    * @type {String}
    */
   get footer() {
-    return this.plain.footer;
+    return this.pojo.footer;
   }
   set footer(footer) {
-    this.plain = applyPatch(this.plain, { footer });
+    this.pojo = applyPatch(this.pojo, { footer });
   }
 
   cursor(cursor?: Partial<Cursor>) {
     if (undef(cursor)) {
-      return this.plain.commandLine.cursor;
+      return this.pojo.commandLine.cursor;
     }
     this.commandLine({ cursor });
   }
@@ -155,7 +157,7 @@ export class State {
    * @type {Number}
    */
   get cursorCols() {
-    return this.plain.commandLine.cursor.cols;
+    return this.pojo.commandLine.cursor.cols;
   }
   set cursorCols(cols) {
     this.cursor({ cols });
@@ -165,7 +167,7 @@ export class State {
    * @type {Number}
    */
   get cursorRows() {
-    return this.plain.commandLine.cursor.rows;
+    return this.pojo.commandLine.cursor.rows;
   }
   set cursorRows(rows) {
     this.cursor({ rows });
@@ -175,7 +177,7 @@ export class State {
    * @type {Number}
    */
   get cursorLinePos() {
-    return this.plain.commandLine.cursor.linePos;
+    return this.pojo.commandLine.cursor.linePos;
   }
   set cursorLinePos(linePos) {
     this.cursor({ linePos });
@@ -185,47 +187,47 @@ export class State {
    * @type {Boolean}
    */
   get maskInput() {
-    return this.plain.maskInput;
+    return this.pojo.maskInput;
   }
   set maskInput(maskInput) {
-    this.plain.maskInput = maskInput;
+    this.pojo.maskInput = maskInput;
   }
 
   /**
    * @type {Boolean}
    */
   get exit() {
-    return this.plain.exit;
+    return this.pojo.exit;
   }
   set exit(exit) {
-    this.plain.exit = exit;
+    this.pojo.exit = exit;
   }
 
   /**
    * @type {Boolean}
    */
   get returnCommand() {
-    return this.plain.returnCommand;
+    return this.pojo.returnCommand;
   }
   set returnCommand(returnCommand) {
-    this.plain.returnCommand = returnCommand;
+    this.pojo.returnCommand = returnCommand;
   }
 
   /**
    * @type {String}
    */
   get mode() {
-    return this.plain.mode;
+    return this.pojo.mode;
   }
   set mode(mode) {
-    this.plain = applyPatch(this.plain, { mode });
+    this.pojo = applyPatch(this.pojo, { mode });
   }
 
   updateCursorPos(commandLine: string) {
-    this.plain = updateCursorPos(this.plain, commandLine);
+    this.pojo = updateCursorPos(this.pojo, commandLine);
   }
 
   clone() {
-    return new State(this.plain);
+    return new State(this.pojo);
   }
 }

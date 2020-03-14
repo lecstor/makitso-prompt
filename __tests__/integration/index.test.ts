@@ -10,7 +10,7 @@ describe("Integration", () => {
   test("with no args", async () => {
     const prompt = new Prompt();
     const promptP = prompt.start();
-    expect(prompt.state.plain.commandLine.prompt).toEqual("makitso> ");
+    expect(prompt.state.pojo.commandLine.prompt).toEqual("makitso> ");
     prompt.stopListenToInput();
     prompt.resolve?.();
     return promptP;
@@ -44,7 +44,7 @@ describe("Integration", () => {
       rows: 10,
       maskInput: false
     };
-    expect(prompt.state.plain).toEqual(expected);
+    expect(prompt.state.pojo).toEqual(expected);
 
     prompt.stopListenToInput();
     prompt.resolve?.();

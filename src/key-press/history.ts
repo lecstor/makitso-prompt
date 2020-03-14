@@ -51,7 +51,7 @@ export const keyPressHistory: KPHistory = {
    * @returns {Object} state
    */
   activateHistory(state: State) {
-    if (state.plain.history && state.plain.history.commands.length > 1) {
+    if (state.pojo.history && state.pojo.history.commands.length > 1) {
       state.mode = "history";
       state.prompt = this.prompt;
       state.patch({ history: { index: 0 } });
@@ -69,8 +69,8 @@ export const keyPressHistory: KPHistory = {
    */
   getHistory(state: State) {
     let history: string[] = [];
-    if (state.plain.history && state.plain.history.commands) {
-      history = state.plain.history.commands.slice(1);
+    if (state.pojo.history && state.pojo.history.commands) {
+      history = state.pojo.history.commands.slice(1);
     }
     return history;
   },
@@ -132,12 +132,12 @@ export const keyPressHistory: KPHistory = {
      * @returns {Object} state
      */
     up(state: State) {
-      const { index = 0 } = state.plain.history || {};
-      if (!state.plain.history.commands[index + 1]) {
+      const { index = 0 } = state.pojo.history || {};
+      if (!state.pojo.history.commands[index + 1]) {
         debug("return state unmodified");
         return state;
       }
-      state.command = state.plain.history.commands[index + 1];
+      state.command = state.pojo.history.commands[index + 1];
       debug(`previous command: ${state.command} & inc history index`);
       return state.patch({ history: { index: index + 1 } });
     },
@@ -148,13 +148,13 @@ export const keyPressHistory: KPHistory = {
      * @returns {Object} state
      */
     down(state: State) {
-      const { index } = state.plain.history;
+      const { index } = state.pojo.history;
       if (index - 1 === 0) {
         return this.escape(state);
       }
       return state.patch({
         commandLine: {
-          command: state.plain.history.commands[index - 1]
+          command: state.pojo.history.commands[index - 1]
         },
         history: { index: index - 1 }
       });
@@ -180,7 +180,7 @@ export const keyPressHistory: KPHistory = {
     escape(state: State) {
       state.mode = state.defaultMode;
       state.prompt = state.defaultPrompt;
-      state.command = state.plain.history.commands[0];
+      state.command = state.pojo.history.commands[0];
       state.patch({ history: { index: 0 } });
     }
   }

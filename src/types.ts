@@ -2,20 +2,23 @@ export type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-export type Cursor = {
+export interface Cursor {
   linePos: number;
   cols: number | null;
   rows: number;
-};
+}
 
-export type Eol = { cols: number; rows: number };
+export interface Eol {
+  cols: number;
+  rows: number;
+}
 
-export type CommandLine = {
+export interface CommandLine {
   command: string;
   cursor: Cursor;
   eol: Eol;
   prompt: string;
-};
+}
 
 export type Prompt = string;
 
@@ -30,7 +33,7 @@ export type Defaults = {
   prompt: string;
 };
 
-export type PlainState = {
+export type StatePojo = {
   columns?: number;
   commandLine: CommandLine;
   defaults: Defaults;

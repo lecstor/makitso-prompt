@@ -2,7 +2,7 @@ import { applyPatch } from "./immutably";
 import { getEndOfLinePos } from "./terminal";
 // const debug = require("./debug");
 
-import { PlainState, Output } from "./types";
+import { StatePojo, Output } from "./types";
 
 /**
  * Mode
@@ -52,7 +52,7 @@ import { PlainState, Output } from "./types";
  * @property {String} footer - line/s printed below the command line
  */
 
-export function updateCursorPos(state: PlainState, commandLine: string) {
+export function updateCursorPos(state: StatePojo, commandLine: string) {
   const eol = getEndOfLinePos(state.columns, commandLine);
   state = applyPatch(state, {
     commandLine: { eol }

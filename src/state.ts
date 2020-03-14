@@ -40,8 +40,8 @@ export const defaultState = {
 export type Stash = { [key: string]: any };
 
 export class State {
-  constructor(public pojo: StatePojo, public stash: Stash = {}) {
-    this.pojo = pojo || defaultState;
+  constructor(public pojo: StatePojo = defaultState, public stash: Stash = {}) {
+    this.pojo = pojo;
     this.stash = stash;
   }
 

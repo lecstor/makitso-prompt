@@ -61,11 +61,24 @@ export function getCommandLine(state: State) {
 }
 
 export function renderHeader(prevState: State, state: State, output: Output) {
-  let rows = 0;
   if (prevState.header) {
-    ({ rows } = getEndOfLinePos(output.columns, prevState.header));
+    // clear the previous header
+    const { rows, cols } = getEndOfLinePos(output.columns, prevState.header);
     debug(`clearLinesAbove ${rows + 1}`);
     clearLinesAbove(output, rows + 1);
+    const { rows: newHeaderRows, cols: newHeaderCols } = getEndOfLinePos(
+      output.columns,
+      state.header
+    );
+
+    // if the new header has less rows that the previous header
+    // write newlines to keep the prompt on the same row
+    const diff =
+      (rows + cols > 0 ? 1 : 0) - (newHeaderRows + newHeaderCols > 0 ? 1 : 0);
+    if (diff > 0) {
+      debug("pad new header");
+      write(output, "\r\n".repeat(diff));
+    }
   }
   cursorTo(output, 0);
   debug(`clearScreenDown`);

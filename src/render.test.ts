@@ -29,4 +29,37 @@ prod sandpit`;
     const result = parseOutput((output as any).data);
     expect(result).toEqual(expected);
   });
+
+  test("remove header from prompt", () => {
+    const input = new MockReadable();
+    const output = newOutput();
+    const prompt = newPrompt(input, output);
+    const prevState = new State({
+      ...defaultState,
+      commandLine: {
+        prompt: "Makitso> ",
+        command: "foo",
+        cursor: { cols: 24, rows: 0, linePos: 0 },
+        eol: { cols: 34, rows: 0 }
+      },
+      footer: "bar"
+    });
+    const state = prevState.clone();
+    state.header = "baz";
+    prompt.render({ state, prevState });
+    let expected = `baz
+Makitso> foo
+bar`;
+    let result = parseOutput((output as any).data);
+    expect(result).toEqual(expected);
+
+    prevState.header = "baz";
+    state.header = "";
+    prompt.render({ state, prevState });
+    expected = `
+Makitso> foo
+bar`;
+    result = parseOutput((output as any).data);
+    expect(result).toEqual(expected);
+  });
 });

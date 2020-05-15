@@ -1,16 +1,17 @@
 const chalk = require("chalk");
-const Prompt = require("./index");
 
-const AutoComplete = require("./key-press-autocomplete");
-const history = require("./key-press-history");
+const { Prompt } = require("./dist/index");
 
-const complete = AutoComplete(["abc1", "ab12", "abcdefg", "a123"]);
+const { keyPressAutoComplete } = require("./dist/key-press/autocomplete");
+const { keyPressHistory } = require("./dist/key-press/history");
 
-const prompt = Prompt({ prompt: chalk`{blue default> }` });
+const complete = keyPressAutoComplete(["abc1", "ab12", "abcdefg", "a123"]);
+
+const prompt = new Prompt({ prompt: chalk`{blue default> }` });
 const defaultKP = [...prompt.keyPressers];
 
 function newPrompt() {
-  Object.assign(prompt, { keyPressers: [...defaultKP, history] });
+  Object.assign(prompt, { keyPressers: [...defaultKP, keyPressHistory] });
   return prompt
     .start({
       header: "Can have a header",
@@ -35,7 +36,9 @@ function newPrompt() {
     )
     .then(command => console.log(`received: "${command}"`))
     .then(() => {
-      Object.assign(prompt, { keyPressers: [...defaultKP, history, complete] });
+      Object.assign(prompt, {
+        keyPressers: [...defaultKP, keyPressHistory, complete]
+      });
       return prompt.start({
         header: chalk`Can update footer/prompt/header and do autocomplete {grey (try abcd [tab])}`,
         prompt: "thePrompt> "

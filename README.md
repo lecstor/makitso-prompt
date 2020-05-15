@@ -25,22 +25,22 @@ for customisation.
 This will simply echo entered commands
 
 ```js
-const Prompt = require("makitso-prompt");
-const prompt = Prompt();
+const { Prompt } = require("makitso-prompt");
+const prompt = new Prompt();
 const command = prompt.start().then(console.log);
 ```
 
 ### Custom prompt
 
 ```js
-const prompt = Prompt({ prompt: chalk`{blue aPrompt> }` });
+const prompt = new Prompt({ prompt: chalk`{blue aPrompt> }` });
 const command = prompt.start().then(console.log);
 ```
 
 ### Include a header above the prompt and a footer below it
 
 ```js
-const prompt = Prompt();
+const prompt = new Prompt();
 const header = "A line above the prompt";
 const footer = "A line below the prompt\nAnother line";
 const command = prompt.start({ header, footer }).then(console.log);
@@ -49,9 +49,9 @@ const command = prompt.start({ header, footer }).then(console.log);
 ## Add a custom keypress handler
 
 ```js
-const history = require("makitso-prompt/key-press-history");
-const prompt = Prompt();
-Object.assign(prompt, { keyPressers: [...prompt.keyPressers, history] });
+const { keyPressHistory } = require("makitso-prompt");
+const prompt = new Prompt();
+Object.assign(prompt, { keyPressers: [...prompt.keyPressers, keyPressHistory] });
 const command = prompt.start().then(console.log);
 ```
 
@@ -68,14 +68,13 @@ The `keyPress` method is called with the app `state` object and a `press` object
 Keypress handlers use the `press` and/or `state` objects to decide what, if
 anything, needs to be changed in the `state` object. Changes are made using
 state methods or using the `applyPatch` function from `makitso-prompt/immutably`
-on `state.plain`.
+on `state.pojo`.
 
 ```js
 const _filter = require("lodash/filter");
-const { applyPatch } = require("makitso-prompt/immutably");
+const { applyPatch } = require("makitso-prompt");
 
-// available as `makitso-prompt/key-press-autocomplete` but you'll likely want
-// to build your own
+// available as `keyPressAutocomplete` but you'll likely want to build your own
 function AutoComplete(choices) {
   return {
     keyPress: async function(state, press) {
@@ -88,7 +87,7 @@ function AutoComplete(choices) {
           state.command = matches[0] + " ";
           state.cursorCols = null;
         } else {
-          // state.plain = applyPatch(state.plain, { footer: matches.join(" ") });
+          // state.pojo = applyPatch(state.pojo, { footer: matches.join(" ") });
           state.footer = matches.join(" ");
         }
       }
@@ -99,7 +98,7 @@ function AutoComplete(choices) {
 
 const complete = AutoComplete(["abc1", "ab12", "abcdefg", "a123"]);
 
-const prompt = Prompt();
+const prompt = new Prompt();
 Object.assign(prompt, { keyPressers: [...prompt.keyPressers, complete] });
 
 const command = prompt.start().then(console.log);

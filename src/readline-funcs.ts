@@ -43,107 +43,119 @@ export function stripVTControlCharacters(str: string) {
   return str.replace(ansi, "");
 }
 
-let getStringWidth: (str: string | number, options?: any) => number;
-let isFullWidthCodePoint: (code: number, options?: any) => boolean;
+function prepareStringForGetStringWidth(
+  str: string,
+  removeControlChars: boolean
+) {
+  str = str.normalize("NFC");
+  if (removeControlChars) str = stripVTControlCharacters(str);
+  return str;
+}
+
+function isZeroWidthCodePoint(code: number) {
+  return (
+    code <= 0x1f || // C0 control codes
+    (code > 0x7f && code <= 0x9f) || // C1 control codes
+    (code >= 0x300 && code <= 0x36f) || // Combining Diacritical Marks
+    (code >= 0x200b && code <= 0x200f) || // Modifying Invisible Characters
+    (code >= 0xfe00 && code <= 0xfe0f) || // Variation Selectors
+    (code >= 0xfe20 && code <= 0xfe2f) || // Combining Half Marks
+    (code >= 0xe0100 && code <= 0xe01ef)
+  ); // Variation Selectors
+}
+
+/**
+ * Returns true if the character represented by a given
+ * Unicode code point is full-width. Otherwise returns false.
+ */
+function isFullWidthCodePoint(code: number) {
+  if (!Number.isInteger(code)) {
+    return false;
+  }
+
+  // Code points are derived from:
+  // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
+  if (
+    code >= 0x1100 &&
+    (code <= 0x115f || // Hangul Jamo
+    code === 0x2329 || // LEFT-POINTING ANGLE BRACKET
+    code === 0x232a || // RIGHT-POINTING ANGLE BRACKET
+      // CJK Radicals Supplement .. Enclosed CJK Letters and Months
+      (code >= 0x2e80 && code <= 0x3247 && code !== 0x303f) ||
+      // Enclosed CJK Letters and Months .. CJK Unified Ideographs Extension A
+      (code >= 0x3250 && code <= 0x4dbf) ||
+      // CJK Unified Ideographs .. Yi Radicals
+      (code >= 0x4e00 && code <= 0xa4c6) ||
+      // Hangul Jamo Extended-A
+      (code >= 0xa960 && code <= 0xa97c) ||
+      // Hangul Syllables
+      (code >= 0xac00 && code <= 0xd7a3) ||
+      // CJK Compatibility Ideographs
+      (code >= 0xf900 && code <= 0xfaff) ||
+      // Vertical Forms
+      (code >= 0xfe10 && code <= 0xfe19) ||
+      // CJK Compatibility Forms .. Small Form Variants
+      (code >= 0xfe30 && code <= 0xfe6b) ||
+      // Halfwidth and Fullwidth Forms
+      (code >= 0xff01 && code <= 0xff60) ||
+      (code >= 0xffe0 && code <= 0xffe6) ||
+      // Kana Supplement
+      (code >= 0x1b000 && code <= 0x1b001) ||
+      // Enclosed Ideographic Supplement
+      (code >= 0x1f200 && code <= 0x1f251) ||
+      // Miscellaneous Symbols and Pictographs 0x1f300 - 0x1f5ff
+      // Emoticons 0x1f600 - 0x1f64f
+      (code >= 0x1f300 && code <= 0x1f64f) ||
+      // CJK Unified Ideographs Extension B .. Tertiary Ideographic Plane
+      (code >= 0x20000 && code <= 0x3fffd))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+let getStringWidth: (str: string, options?: any) => number;
+// let isFullWidthCodePoint: (code: number, options?: any) => boolean;
 
 if ((process as any).binding("config").hasIntl) {
   const icu = (process as any).binding("icu");
-  getStringWidth = function getStringWidth(str: string | number, options: any) {
-    options = options || {};
-    if (typeof str === "number" && !Number.isInteger(str)) {
-      str = stripVTControlCharacters(String(str));
+  getStringWidth = function getStringWidth(str, removeControlChars = true) {
+    let width = 0;
+
+    str = prepareStringForGetStringWidth(str, removeControlChars);
+    for (let i = 0; i < str.length; i++) {
+      // Try to avoid calling into C++ by first handling the ASCII portion of
+      // the string. If it is fully ASCII, we skip the C++ part.
+      const code = str.charCodeAt(i);
+      if (code >= 127) {
+        width += icu.getStringWidth(str.slice(i));
+        break;
+      }
+      width += code >= 32 ? 1 : 0;
     }
-    return icu.getStringWidth(
-      str,
-      Boolean(options.ambiguousAsFullWidth),
-      Boolean(options.expandEmojiSequence)
-    );
-  };
-  isFullWidthCodePoint = function isFullWidthCodePoint(
-    code: number,
-    options: any
-  ) {
-    if (typeof code !== "number") {
-      return false;
-    }
-    return icu.getStringWidth(code, options) === 2;
+    return width;
   };
 } else {
   /**
    * Returns the number of columns required to display the given string.
    */
-  getStringWidth = function getStringWidth(str) {
-    if (typeof str === "number" && Number.isInteger(str)) {
-      return isFullWidthCodePoint(str) ? 2 : 1;
-    }
-
+  getStringWidth = function getStringWidth(str, removeControlChars = true) {
     let width = 0;
 
-    str = stripVTControlCharacters(String(str));
-
-    for (let i = 0; i < str.length; i++) {
-      const code = str.codePointAt(i) || 0;
-
-      if (code >= 0x10000) {
-        // surrogates
-        i++;
-      }
-
-      if (isFullWidthCodePoint(code)) {
-        width += 2;
-      } else {
-        width++;
+    str = prepareStringForGetStringWidth(str, removeControlChars);
+    for (const char of str) {
+      const code = char.codePointAt(0);
+      if (code !== undefined) {
+        if (isFullWidthCodePoint(code)) {
+          width += 2;
+        } else if (!isZeroWidthCodePoint(code)) {
+          width++;
+        }
       }
     }
 
     return width;
-  };
-  /**
-   * Returns true if the character represented by a given
-   * Unicode code point is full-width. Otherwise returns false.
-   */
-  isFullWidthCodePoint = function isFullWidthCodePoint(code) {
-    if (!Number.isInteger(code)) {
-      return false;
-    }
-
-    // Code points are derived from:
-    // http://www.unicode.org/Public/UNIDATA/EastAsianWidth.txt
-    if (
-      code >= 0x1100 &&
-      (code <= 0x115f || // Hangul Jamo
-      code === 0x2329 || // LEFT-POINTING ANGLE BRACKET
-      code === 0x232a || // RIGHT-POINTING ANGLE BRACKET
-        // CJK Radicals Supplement .. Enclosed CJK Letters and Months
-        (code >= 0x2e80 && code <= 0x3247 && code !== 0x303f) ||
-        // Enclosed CJK Letters and Months .. CJK Unified Ideographs Extension A
-        (code >= 0x3250 && code <= 0x4dbf) ||
-        // CJK Unified Ideographs .. Yi Radicals
-        (code >= 0x4e00 && code <= 0xa4c6) ||
-        // Hangul Jamo Extended-A
-        (code >= 0xa960 && code <= 0xa97c) ||
-        // Hangul Syllables
-        (code >= 0xac00 && code <= 0xd7a3) ||
-        // CJK Compatibility Ideographs
-        (code >= 0xf900 && code <= 0xfaff) ||
-        // Vertical Forms
-        (code >= 0xfe10 && code <= 0xfe19) ||
-        // CJK Compatibility Forms .. Small Form Variants
-        (code >= 0xfe30 && code <= 0xfe6b) ||
-        // Halfwidth and Fullwidth Forms
-        (code >= 0xff01 && code <= 0xff60) ||
-        (code >= 0xffe0 && code <= 0xffe6) ||
-        // Kana Supplement
-        (code >= 0x1b000 && code <= 0x1b001) ||
-        // Enclosed Ideographic Supplement
-        (code >= 0x1f200 && code <= 0x1f251) ||
-        // CJK Unified Ideographs Extension B .. Tertiary Ideographic Plane
-        (code >= 0x20000 && code <= 0x3fffd))
-    ) {
-      return true;
-    }
-
-    return false;
   };
 }
 
@@ -164,9 +176,16 @@ export function getDisplayPos(str: string, col: number) {
       row += 1;
       continue;
     }
-    const width = getStringWidth(code);
-    if (width === 0 || width === 1) {
-      offset += width;
+
+    let codePointWidth = 0;
+    if (isFullWidthCodePoint(code)) {
+      codePointWidth = 2;
+    } else if (!isZeroWidthCodePoint(code)) {
+      codePointWidth = 1;
+    }
+
+    if (codePointWidth < 2) {
+      offset += codePointWidth;
     } else {
       // width === 2
       if ((offset + 1) % col === 0) {

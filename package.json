@@ -38,7 +38,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "rm -rf dist/ && tsc"
+    "build": "rm -rf dist/ && tsc",
+    "prepare": "yarn build"
   },
   "engines": {
     "node": ">=8.9"
